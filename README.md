@@ -1,7 +1,10 @@
 # HyperFlipBX90000Dominator
 A stand-alone webpage that flips through the glyphs of a font. The page uses `opentype.js` to achieve this, it is in the header so no internet connection is needed.
 
-# How to use the HyperFlip BX 90000 Dominator
+## License
+Like the included `opentype.js` this software is licensed under the MIT license.
+
+##  How to use the HyperFlip BX 90000 Dominator
 Open the HTML page in a browser.
 ![Open the HTML page](images/1.png)
 
