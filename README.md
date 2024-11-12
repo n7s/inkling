@@ -20,3 +20,5 @@ In the control panel there is a `Randomize glyph order` button. It randomises th
 
 Once you have found a setting you like you can let it animate.
 ![Animate](images/animation.gif)
+
+Yes I will be accepting pull requests. Don’t ask me for new features, make them yourself and pull request me.
