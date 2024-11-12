@@ -5,7 +5,7 @@ A stand-alone webpage that flips through the glyphs of a font. The page uses `op
 Open the HTML page in a browser.
 ![Open the HTML page](images/1.png)
 
-**HyperFlipBX90000Dominator** will display the most common axes present in your font, if your font is variable
+**HyperFlipBX90000Dominator** will display the most common axes present in your font, if your font is variable.
 ![Adjust the values](images/3.png)
 
 The control panel will become invisible when you move out your mouse cursor.
@@ -19,4 +19,4 @@ In the upper right corner there is a `Fullscreen` button. It full-screens **Hype
 In the control panel there is a `Randomize glyph order` button. It randomises the glyph order. Press it again and it reverts to sequential glyph order.
 
 Once you have found a setting you like you can let it animate.
-[![Animate](images/animation.png)](images/animation.mov)
+![Animate](images/animation.gif)
