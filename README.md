@@ -5,7 +5,7 @@ A stand-alone webpage that flips through the glyphs of a font. The page uses `op
 Like the included `opentype.js` this software is licensed under the MIT license.
 
 ##  How to use the HyperFlip BX 90000 Dominator
-Open the HTML page in a browser.
+Open the HTML page in a browser and drop a font on it. It will read OTF, TTF, and WOFF2, static and variable.
 ![Open the HTML page](images/1.png)
 
 **HyperFlipBX90000Dominator** will display the most common axes present in your font, if your font is variable.
