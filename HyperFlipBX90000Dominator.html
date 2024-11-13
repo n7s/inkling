@@ -506,10 +506,10 @@
 
             content.innerHTML = `
                 <p><strong>Names</strong><br>
-                Font Family &rarr; ${info.fontFamily}<br>
-                Full Name &rarr; ${info.fullName}</p>
+                Font family &rarr; ${info.fontFamily}<br>
+                Full name &rarr; ${info.fullName}</p>
 
-                <p><strong>Version and Dates</strong><br>
+                <p><strong>Version and dates</strong><br>
                 Version &rarr; ${info.version}<br>
                 Created &rarr; ${info.created}<br>
                 Modified &rarr; ${info.modified}</p>
@@ -522,12 +522,12 @@
                 Designer &rarr; ${info.designer}<br>
                 Vendor ID &rarr; ${info.vendorID}</p>
 
-                <p><strong>Technical Details</strong><br>
-                Format &rarr; ${info.format}<br>
-                Total Glyphs &rarr; ${info.glyphCount}</p>
+                <p><strong>File format and glyph count</strong><br>
+                File format &rarr; ${info.format}<br>
+                Total glyphs &rarr; ${info.glyphCount}</p>
 
                 ${info.axes.length ? `
-                <p><strong>Variable Font Axes</strong><br>
+                <p><strong>Variable font axes</strong><br>
                 ${info.axes.map(axis =>
             `${axis.name} (${axis.tag}) &rarr; ${axis.min} to ${axis.max}, default &rarr; ${axis.default}`
             ).join('<br>')}</p>` : ''}
