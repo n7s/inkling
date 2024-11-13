@@ -860,6 +860,17 @@
             infoPanel.style.display = isVisible ? 'none' : 'block';
             this.textContent = isVisible ? 'Show Glyph Info' : 'Hide Glyph Info';
         });
+
+        // After document is ready, hide the font info panel and update button text
+        document.addEventListener('DOMContentLoaded', function() {
+            const fontInfo = document.getElementById('font-info');
+            const infoToggle = document.getElementById('info-toggle');
+
+            // Hide the font info panel initially
+            fontInfo.style.display = 'none';
+            // Update the button text to reflect the hidden state
+            infoToggle.textContent = 'Show Info';
+        });
     </script>
 </body>
 </html>
