@@ -17,6 +17,12 @@ The control panel will become invisible when you move out your mouse cursor.
 If you like a negative rendering there is button for that.
 ![Colour toggle](images/5.png)
 
+If you want to see some information about the font there is a button for that.
+![Font info](images/font-info.png)
+
+If you want to see some information about the currently displayed glyph there is a button for that.
+![Glyph info](images/glyph-info.png)
+
 In the upper right corner there is a `Fullscreen` button. It full-screens **HyperFlipBX90000Dominator**.
 
 In the control panel there is a `Randomize glyph order` button. It randomises the glyph order. Press it again and it reverts to sequential glyph order.
