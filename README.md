@@ -8,6 +8,9 @@ Like the included `opentype.js` this software is licensed under the MIT license.
 Open the HTML page in a browser and drop a font on it. It will read OTF, TTF, and WOFF2, static and variable.
 ![Open the HTML page](images/1.png)
 
+## Keyboard shortcuts
+Pressing the `Space` key on your keyboard pauses/resumes the animation. Pressing either `arrow left` or `h` moves ten glyphs back, and pressing either `arrow right` or `l` moves ten glyphs forward. Pressing either `arrow up` or `k` moves one glyph forward, and pressing either `arrow down` or `j` will move one glyph back.
+
 **HyperFlipBX90000Dominator** will display the most common axes present in your font, if your font is variable.
 ![Adjust the values](images/3.png)
 

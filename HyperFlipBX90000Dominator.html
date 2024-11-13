@@ -361,6 +361,117 @@
         let currentFont = null;
         let isRandomOrder = false;
         let sequentialGlyphs = [];
+        let currentIndex = 0;  // Added to track current position
+
+        // Add keyboard event listener
+        window.addEventListener('keydown', handleKeyPress);
+
+        function handleKeyPress(event) {
+            const { key } = event;
+
+            // Prevent default behavior for control keys
+            if (['Space', 'ArrowLeft', 'ArrowRight', 'h', 'j', 'k', 'l'].includes(key)) {
+                event.preventDefault();
+            }
+
+            switch (key) {
+                case ' ':
+                // Toggle animation
+                isAnimating = !isAnimating;
+                if (isAnimating) {
+                    const interval = parseInt(speedSlider.value);
+                    startAnimation(currentGlyphs, interval);
+                } else if (animationInterval) {
+                    clearTimeout(animationInterval);
+                }
+                break;
+                case 'ArrowLeft':
+                case 'h':
+                // Move back 10 glyphs
+                isAnimating = false;
+                if (animationInterval) clearTimeout(animationInterval);
+                currentIndex = Math.max(0, currentIndex - 10);
+                displayCurrentGlyph();
+                break;
+                case 'j':
+                case 'ArrowDown':
+                // Move back 1 glyph
+                isAnimating = false;
+                if (animationInterval) clearTimeout(animationInterval);
+                currentIndex = Math.max(0, currentIndex - 1);
+                displayCurrentGlyph();
+                break;
+                case 'ArrowRight':
+                case 'l':
+                // Move forward 10 glyphs
+                isAnimating = false;
+                if (animationInterval) clearTimeout(animationInterval);
+                currentIndex = Math.min(currentGlyphs.length - 1, currentIndex + 10);
+                displayCurrentGlyph();
+                break;
+                case 'k':
+                case 'ArrowUp':
+                // Move forward 1 glyph
+                isAnimating = false;
+                if (animationInterval) clearTimeout(animationInterval);
+                currentIndex = Math.min(currentGlyphs.length - 1, currentIndex + 1);
+                displayCurrentGlyph();
+                break;
+            }
+        }
+
+        // Helper function to display current glyph
+        function displayCurrentGlyph() {
+            if (currentGlyphs.length === 0) return;
+            const currentChar = currentGlyphs[currentIndex];
+            frontBuffer.textContent = currentChar;
+            updateGlyphInfo(currentChar);
+        }
+
+        // Modified animation function to use currentIndex
+        async function startAnimation(glyphs, interval) {
+            if (!glyphs || glyphs.length === 0) {
+                console.error('No glyphs available for animation');
+                return;
+            }
+
+            isAnimating = true;
+
+            const animate = () => {
+                if (!isAnimating) return;
+                const currentChar = glyphs[currentIndex];
+                frontBuffer.textContent = currentChar;
+                updateGlyphInfo(currentChar);
+                currentIndex = (currentIndex + 1) % glyphs.length;
+                animationInterval = setTimeout(animate, interval);
+            };
+
+            animate();
+        }
+
+        // Modified cleanup function to reset index
+        function cleanupCurrentFont() {
+            isAnimating = false;
+            if (animationInterval) {
+                clearTimeout(animationInterval);
+            }
+
+            currentGlyphs = [];
+            sequentialGlyphs = [];
+            currentVariationSettings = {};
+            currentIndex = 0;  // Reset the index
+
+            if (currentFont) {
+                const currentFontFamily = frontBuffer.style.fontFamily;
+                document.fonts.forEach(font => {
+                    if (font.family === currentFontFamily) {
+                        document.fonts.delete(font);
+                    }
+                });
+            }
+
+            frontBuffer.textContent = '';
+        }
 
         // Font information
         function getFontInformation(font) {
@@ -426,19 +537,19 @@
 
         // Glyph information
         function updateGlyphInfo(char) {
-        if (!currentFont) return;
+            if (!currentFont) return;
 
-        const glyphIndex = currentFont.charToGlyphIndex(char);
-        const glyph = currentFont.glyphs.get(glyphIndex);
-        const unicode = char.codePointAt(0);
+            const glyphIndex = currentFont.charToGlyphIndex(char);
+            const glyph = currentFont.glyphs.get(glyphIndex);
+            const unicode = char.codePointAt(0);
 
-        const content = document.getElementById('glyph-info-content');
-        content.innerHTML = `
+            const content = document.getElementById('glyph-info-content');
+            content.innerHTML = `
             Name &rarr; ${glyph.name || 'Unknown'}<br>
             Unicode &rarr; U+${unicode.toString(16).toUpperCase().padStart(4, '0')}<br>
             Index &rarr; ${glyphIndex}
         `;
-    }
+        }
 
         // Slider elements
         const fontSizeSlider = document.getElementById('font-size');
