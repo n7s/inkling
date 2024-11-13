@@ -31,6 +31,14 @@
             overflow: hidden;
         }
 
+        em {
+            font-style: italic;
+        }
+
+        p > semibold {
+            font-weight: 600;
+        }
+
         #fullScreen {
             float: right;
             margin-left: auto;
@@ -46,6 +54,7 @@
 
         #fullScreen button,
         #info-toggle,
+        #glyph-info-toggle,
         #background-toggle,
         #randomize-button {
             font-size: 0.7rem;
@@ -131,6 +140,13 @@
             margin-block-start: 0px;
             padding-top: 0px;
             margin-top: 0px;
+        }
+
+        #glyph-info {
+            position: fixed;
+            top: 14px;
+            left: calc(50% - 50px);
+            color: var(--black);
         }
 
         #controls {
@@ -307,9 +323,13 @@
     <div id="font-info">
         <div id="font-info-content"></div>
     </div>
+    <div id="glyph-info" class="glyph-info" style="display: none;">
+        <div id="glyph-info-content"></div>
+    </div>
     <div id="controls">
         <div class="buttons-container">
-            <button id="info-toggle">Show Info</button>
+            <button id="info-toggle">Show Font Info</button>
+            <button id="glyph-info-toggle">Show Glyph Info</button>
             <button id="background-toggle">Swap colours</button>
             <button id="randomize-button">Randomize glyph order</button>
         </div>
@@ -375,102 +395,50 @@
             const content = document.getElementById('font-info-content');
 
             content.innerHTML = `
-        <p><strong>Names:</strong><br>
-        Font Family: ${info.fontFamily}<br>
-        Full Name: ${info.fullName}</p>
-
-        <p><strong>Version and Dates:</strong><br>
-        Version: ${info.version}<br>
-        Created: ${info.created}<br>
-        Modified: ${info.modified}</p>
-
-        <p><strong>Copyright:</strong><br>
-        ${info.copyright}</p>
-
-        <p><strong>Foundry:</strong><br>
-        Manufacturer: ${info.manufacturer}<br>
-        Designer: ${info.designer}<br>
-        Vendor ID: ${info.vendorID}</p>
-
-        <p><strong>Technical Details:</strong><br>
-        Format: ${info.format}<br>
-        Total Glyphs: ${info.glyphCount}</p>
-
-        ${info.axes.length ? `
-        <p><strong>Variable Font Axes:</strong><br>
-        ${info.axes.map(axis =>
-            `${axis.name} (${axis.tag}): ${axis.min} to ${axis.max}, default: ${axis.default}`
-            ).join('<br>')}</p>` : ''}
-    `;
-        }
-
-        function updateFontInfo(font) {
-            const info = getFontInformation(font);
-            const content = document.getElementById('font-info-content');
-
-            content.innerHTML = `
-        <p><strong>Names:</strong><br>
-        Font Family: ${info.fontFamily}<br>
-        Full Name: ${info.fullName}</p>
-
-        <p><strong>Version and Dates:</strong><br>
-        Version: ${info.version}<br>
-        Created: ${info.created}<br>
-        Modified: ${info.modified}</p>
-
-        <p><strong>Copyright:</strong><br>
-        ${info.copyright}</p>
-
-        <p><strong>Foundry:</strong><br>
-        Manufacturer: ${info.manufacturer}<br>
-        Designer: ${info.designer}<br>
-        Vendor ID: ${info.vendorID}</p>
-
-        <p><strong>Technical Details:</strong><br>
-        Format: ${info.format}<br>
-        Total Glyphs: ${info.glyphCount}</p>
-
-        ${info.axes.length ? `
-        <p><strong>Variable Font Axes:</strong><br>
-        ${info.axes.map(axis =>
-            `${axis.name} (${axis.tag}): ${axis.min} to ${axis.max}, default: ${axis.default}`
-            ).join('<br>')}</p>` : ''}
-    `;
-        }
-
-        function updateFontInfo(font) {
-            const info = getFontInformation(font);
-            const content = document.getElementById('font-info-content');
-
-            content.innerHTML = `
                 <p><strong>Names</strong><br>
-                Font Family: ${info.fontFamily}<br>
-                Full Name: ${info.fullName}</p>
+                Font Family &rarr; ${info.fontFamily}<br>
+                Full Name &rarr; ${info.fullName}</p>
 
                 <p><strong>Version and Dates</strong><br>
-                Version: ${info.version}<br>
-                Created: ${info.created}<br>
-                Modified: ${info.modified}</p>
+                Version &rarr; ${info.version}<br>
+                Created &rarr; ${info.created}<br>
+                Modified &rarr; ${info.modified}</p>
 
                 <p><strong>Copyright</strong><br>
                 ${info.copyright}</p>
 
                 <p><strong>Foundry</strong><br>
-                Manufacturer: ${info.manufacturer}<br>
-                Designer: ${info.designer}<br>
-                Vendor ID: ${info.vendorID}</p>
+                Manufacturer &rarr; ${info.manufacturer}<br>
+                Designer &rarr; ${info.designer}<br>
+                Vendor ID &rarr; ${info.vendorID}</p>
 
                 <p><strong>Technical Details</strong><br>
-                Format: ${info.format}<br>
-                Total Glyphs: ${info.glyphCount}</p>
+                Format &rarr; ${info.format}<br>
+                Total Glyphs &rarr; ${info.glyphCount}</p>
 
                 ${info.axes.length ? `
                 <p><strong>Variable Font Axes</strong><br>
                 ${info.axes.map(axis =>
-            `${axis.name} (${axis.tag}): ${axis.min} to ${axis.max}, default: ${axis.default}`
+            `${axis.name} (${axis.tag}) &rarr; ${axis.min} to ${axis.max}, default &rarr; ${axis.default}`
             ).join('<br>')}</p>` : ''}
             `;
         }
+
+        // Glyph information
+        function updateGlyphInfo(char) {
+        if (!currentFont) return;
+
+        const glyphIndex = currentFont.charToGlyphIndex(char);
+        const glyph = currentFont.glyphs.get(glyphIndex);
+        const unicode = char.codePointAt(0);
+
+        const content = document.getElementById('glyph-info-content');
+        content.innerHTML = `
+            Name &rarr; ${glyph.name || 'Unknown'}<br>
+            Unicode &rarr; U+${unicode.toString(16).toUpperCase().padStart(4, '0')}<br>
+            Index &rarr; ${glyphIndex}
+        `;
+    }
 
         // Slider elements
         const fontSizeSlider = document.getElementById('font-size');
@@ -669,7 +637,7 @@
             return chars;
         }
 
-        // Animate glyphs
+        // Modify the animation function
         async function startAnimation(glyphs, interval) {
             if (!glyphs || glyphs.length === 0) {
                 console.error('No glyphs available for animation');
@@ -681,7 +649,9 @@
 
             const animate = () => {
                 if (!isAnimating) return;
-                frontBuffer.textContent = glyphs[index];
+                const currentChar = glyphs[index];
+                frontBuffer.textContent = currentChar;
+                updateGlyphInfo(currentChar);
                 index = (index + 1) % glyphs.length;
                 animationInterval = setTimeout(animate, interval);
             };
@@ -776,12 +746,20 @@
         // Initialize drop handlers
         document.body.addEventListener('drop', handleDrop, false);
 
-        // Create the font info
+        // Initialize the font info
         document.getElementById('info-toggle').addEventListener('click', function() {
             const infoPanel = document.getElementById('font-info');
             const isVisible = infoPanel.style.display !== 'none';
             infoPanel.style.display = isVisible ? 'none' : 'block';
             this.textContent = isVisible ? 'Show Info' : 'Hide Info';
+        });
+
+        // Initialize the glyph info
+        document.getElementById('glyph-info-toggle').addEventListener('click', function() {
+            const infoPanel = document.getElementById('glyph-info');
+            const isVisible = infoPanel.style.display !== 'none';
+            infoPanel.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? 'Show Glyph Info' : 'Hide Glyph Info';
         });
     </script>
 </body>
