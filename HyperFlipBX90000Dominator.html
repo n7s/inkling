@@ -376,15 +376,16 @@
 
             switch (key) {
                 case ' ':
-                // Toggle animation
-                isAnimating = !isAnimating;
-                if (isAnimating) {
-                    const interval = parseInt(speedSlider.value);
-                    startAnimation(currentGlyphs, interval);
-                } else if (animationInterval) {
-                    clearTimeout(animationInterval);
-                }
-                break;
+                    // Toggle animation without resetting currentIndex
+                    isAnimating = !isAnimating;
+                    if (isAnimating) {
+                        const interval = parseInt(speedSlider.value);
+                        // Use the existing currentIndex when resuming
+                        animate(currentGlyphs, interval);
+                    } else if (animationInterval) {
+                        clearTimeout(animationInterval);
+                    }
+                    break;
                 case 'ArrowLeft':
                 case 'h':
                 // Move back 10 glyphs
@@ -428,25 +429,23 @@
             updateGlyphInfo(currentChar);
         }
 
-        // Modified animation function to use currentIndex
-        async function startAnimation(glyphs, interval) {
+        // Modified animation functions
+        function animate(glyphs, interval) {
             if (!glyphs || glyphs.length === 0) {
                 console.error('No glyphs available for animation');
                 return;
             }
 
-            isAnimating = true;
-
-            const animate = () => {
+            const nextFrame = () => {
                 if (!isAnimating) return;
                 const currentChar = glyphs[currentIndex];
                 frontBuffer.textContent = currentChar;
                 updateGlyphInfo(currentChar);
                 currentIndex = (currentIndex + 1) % glyphs.length;
-                animationInterval = setTimeout(animate, interval);
+                animationInterval = setTimeout(nextFrame, interval);
             };
 
-            animate();
+            nextFrame();
         }
 
         // Modified cleanup function to reset index
@@ -748,26 +747,15 @@
             return chars;
         }
 
-        // Modify the animation function
+        // Update the startAnimation function to use the new animate function
         async function startAnimation(glyphs, interval) {
             if (!glyphs || glyphs.length === 0) {
                 console.error('No glyphs available for animation');
                 return;
             }
 
-            let index = 0;
             isAnimating = true;
-
-            const animate = () => {
-                if (!isAnimating) return;
-                const currentChar = glyphs[index];
-                frontBuffer.textContent = currentChar;
-                updateGlyphInfo(currentChar);
-                index = (index + 1) % glyphs.length;
-                animationInterval = setTimeout(animate, interval);
-            };
-
-            animate();
+            animate(glyphs, interval);
         }
 
         // Create sliders for variable font axes
