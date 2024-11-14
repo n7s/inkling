@@ -13,6 +13,7 @@
     <style>
         :root {
             --system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            --system-mono: ui-monospace, "SF Mono", SFMono-Regular, "DejaVu Sans Mono", Menlo, Consolas, monospace;
             --white: rgb(255,255,255);
             --black: rgb(0,0,0);
         }
@@ -37,6 +38,10 @@
 
         p > semibold {
             font-weight: 600;
+        }
+
+        .monospaced {
+            font-family: var(--system-mono);
         }
 
         #fullScreen {
@@ -549,8 +554,8 @@
             const content = document.getElementById('glyph-info-content');
             content.innerHTML = `
             Name &rarr; ${glyph.name || 'Unknown'}<br>
-            Unicode &rarr; U+${unicode.toString(16).toUpperCase().padStart(4, '0')}<br>
-            Index &rarr; ${glyphIndex}
+            Unicode &rarr; <span class="monospaced">U+${unicode.toString(16).toUpperCase().padStart(4, '0')}</span><br>
+            Index &rarr; <span class="monospaced">${glyphIndex}</span>
         `;
         }
 
