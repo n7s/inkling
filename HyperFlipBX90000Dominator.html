@@ -495,6 +495,7 @@
                 designer: names.designer?.en || 'Unknown',
                 vendorID: os2?.achVendID || 'Unknown',
                 format: font.outlinesFormat,
+                unitsPerEm: head?.unitsPerEm || 'Unknown',
                 created: head?.created ? new Date(head.created * 1000).toLocaleDateString() : 'Unknown',
                 modified: head?.modified ? new Date(head.modified * 1000).toLocaleDateString() : 'Unknown',
                 glyphCount: font.glyphs.length,
@@ -520,6 +521,7 @@
         <p><strong>Font file</strong><br>
         Filename &rarr; ${info.filename}<br>
         File format &rarr; ${info.format}<br>
+        Units per Em &rarr; ${info.unitsPerEm}<br>
         Glyph count &rarr; ${info.glyphCount}</p>
 
         <p><strong>Version and dates</strong><br>
@@ -540,7 +542,7 @@
         ${info.axes.map(axis =>
             `${axis.name} (${axis.tag}) &rarr; ${axis.min} to ${axis.max}, default &rarr; ${axis.default}`
             ).join('<br>')}</p>` : ''}
-    `;
+        `;
         }
 
         // Glyph information
