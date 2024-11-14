@@ -196,6 +196,7 @@
         #font-metrics-overlay > .side-bearing-line {
             width: 1px;
             height: 100%;
+            top: 0;
         }
 
         #font-metrics-overlay > .legend {
@@ -596,21 +597,31 @@
         `;
         }
 
-        // Metrics display
+        // Modified renderFontMetricsOverlay function with corrected side bearing calculations
         function renderFontMetricsOverlay(font) {
             const overlay = document.getElementById('font-metrics-overlay');
             const glyphDisplay = document.querySelector('.glyph-buffer');
-            const verticalPosition = document.getElementById('vertical-position');
-            const reversedPosition = verticalPosition.max - verticalPosition.value;
             overlay.innerHTML = '';
 
-            const fontSize = parseInt(getComputedStyle(glyphDisplay).fontSize);
-            const scale = fontSize / font.unitsPerEm;
+            // Get current glyph
+            const currentChar = glyphDisplay.textContent;
+            const glyphIndex = font.charToGlyphIndex(currentChar);
+            const glyph = font.glyphs.get(glyphIndex);
 
+            // Get font size for metrics scaling
+            const fontSize = parseInt(getComputedStyle(glyphDisplay).fontSize);
+            const metricsScale = fontSize / font.unitsPerEm;
+
+            // Get rendered glyph dimensions and calculate advance width scaling
             const glyphRect = glyphDisplay.getBoundingClientRect();
-            const baselineOffset = (font.tables.os2.sTypoAscender * scale);
+            const containerCenter = glyphRect.left + (glyphRect.width / 2);
+            const advanceScale = glyphRect.width / glyph.advanceWidth;
+
+            // Calculate baseline position
+            const baselineOffset = (font.tables.os2.sTypoAscender * metricsScale);
             const baseline = glyphRect.top + baselineOffset;
 
+            // Create metric lines helper function
             function createMetricLine(yPosition, label) {
                 const line = document.createElement('div');
                 line.className = 'metric-line';
@@ -625,457 +636,471 @@
                 overlay.appendChild(legend);
             }
 
+            // Add standard metric lines
             createMetricLine(baseline, 'Baseline');
-            createMetricLine(baseline - (font.tables.os2.sTypoAscender * scale), 'Ascender');
-            createMetricLine(baseline + -(font.tables.os2.sTypoDescender * scale), 'Descender');
-            createMetricLine(baseline - (font.tables.os2.sxHeight * scale), 'x-Height');
-            createMetricLine(baseline - (font.tables.os2.sCapHeight * scale), 'Cap Height');
+            createMetricLine(baseline - (font.tables.os2.sTypoAscender * metricsScale), 'Ascender');
+            createMetricLine(baseline + -(font.tables.os2.sTypoDescender * metricsScale), 'Descender');
+            createMetricLine(baseline - (font.tables.os2.sxHeight * metricsScale), 'x-Height');
+            createMetricLine(baseline - (font.tables.os2.sCapHeight * metricsScale), 'Cap Height');
 
-            // Add small caps line if the metrics exist
             if (font.tables.os2.sSmallCapHeight) {
-                createMetricLine(baseline - (font.tables.os2.sSmallCapHeight * scale), 'Small Caps');
+                createMetricLine(baseline - (font.tables.os2.sSmallCapHeight * metricsScale), 'Small Caps');
             }
 
-            const currentGlyph = font.charToGlyph(glyphDisplay.textContent);
-            const leftSideBearing = currentGlyph.leftSideBearing * scale;
-            const rightSideBearing = (currentGlyph.advanceWidth - currentGlyph.leftSideBearing - currentGlyph.xMax) * scale;
+            // Calculate side bearing positions using advance width scaling
+            const scaledAdvanceWidth = glyph.advanceWidth * advanceScale;
+            const leftBearingPosition = containerCenter - (scaledAdvanceWidth / 2);
+            const rightBearingPosition = leftBearingPosition + scaledAdvanceWidth;
 
+            // Create bearing lines
             const leftLine = document.createElement('div');
             leftLine.className = 'side-bearing-line';
-            leftLine.style.left = `${glyphRect.left + leftSideBearing}px`;
+            leftLine.style.left = `${leftBearingPosition}px`;
             overlay.appendChild(leftLine);
 
             const rightLine = document.createElement('div');
             rightLine.className = 'side-bearing-line';
-            rightLine.style.right = `${glyphRect.right - rightSideBearing}px`;
+            rightLine.style.left = `${rightBearingPosition}px`;
             overlay.appendChild(rightLine);
         }
 
-        // Initial overlay setup (hidden by default)
-        document.getElementById('font-metrics-overlay').style.display = 'none';
+    // Call renderFontMetricsOverlay whenever the glyph changes
+    function updateGlyphInfo(char) {
+        if (!currentFont) return;
 
-        // Slider elements
-        const fontSizeSlider = document.getElementById('font-size');
-        const speedSlider = document.getElementById('animation-speed');
-        const verticalPositionSlider = document.getElementById('vertical-position');
+        const glyphIndex = currentFont.charToGlyphIndex(char);
+        const glyph = currentFont.glyphs.get(glyphIndex);
+        const unicode = char.codePointAt(0);
 
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
+        const content = document.getElementById('glyph-info-content');
+        content.innerHTML = `
+        Name → ${glyph.name || 'Unknown'}<br>
+        Unicode → <span class="monospaced">U+${unicode.toString(16).toUpperCase().padStart(4, '0')}</span><br>
+        Index → <span class="monospaced">${glyphIndex}</span>
+    `;
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        // Update metrics overlay if visible
+        if (document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
         }
+    }
 
-        // Handle drag and drop styling
-        ['dragenter', 'dragover'].forEach(eventName => {
-            document.body.addEventListener(eventName, () => document.body.classList.add('dragover'), false);
-        });
+    // Initial overlay setup (hidden by default)
+    document.getElementById('font-metrics-overlay').style.display = 'none';
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            document.body.addEventListener(eventName, () => document.body.classList.remove('dragover'), false);
-        });
+    // Slider elements
+    const fontSizeSlider = document.getElementById('font-size');
+    const speedSlider = document.getElementById('animation-speed');
+    const verticalPositionSlider = document.getElementById('vertical-position');
 
-        // Handle font size slider
-        fontSizeSlider.addEventListener('input', (e) => {
-            const newSize = e.target.value;
-            frontBuffer.style.fontSize = `${newSize}px`;
-            e.target.nextElementSibling.textContent = `${newSize}px`;
-        });
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
 
-        // Handle animation speed slider
-        speedSlider.addEventListener('input', (e) => {
-            const newInterval = parseInt(e.target.value);
-            e.target.nextElementSibling.textContent = `${newInterval}ms`;
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
-            if (animationInterval) {
-                clearTimeout(animationInterval);
-                isAnimating = false;
-            }
+    // Handle drag and drop styling
+    ['dragenter', 'dragover'].forEach(eventName => {
+        document.body.addEventListener(eventName, () => document.body.classList.add('dragover'), false);
+    });
 
-            isAnimating = true;
-            startAnimation(currentGlyphs, newInterval);
-        });
+    ['dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, () => document.body.classList.remove('dragover'), false);
+    });
 
-        // Handle vertical position slider
-        verticalPositionSlider.addEventListener('input', (e) => {
-            const reversedPosition = e.target.max - e.target.value;
-            frontBuffer.style.top = `${reversedPosition - 50}%`;
-            e.target.nextElementSibling.textContent = `${reversedPosition}%`;
-        });
+    // Handle font size slider
+    fontSizeSlider.addEventListener('input', (e) => {
+        const newSize = e.target.value;
+        frontBuffer.style.fontSize = `${newSize}px`;
+        e.target.nextElementSibling.textContent = `${newSize}px`;
+    });
 
-        // Toggle background color
-        document.getElementById('background-toggle').addEventListener('click', () => {
-            isDarkMode = !isDarkMode;
-            if (isDarkMode) {
-                document.documentElement.style.setProperty('--white', 'rgb(0, 0, 0)');
-                document.documentElement.style.setProperty('--black', 'rgb(255, 255, 255)');
-            } else {
-                document.documentElement.style.setProperty('--white', 'rgb(255, 255, 255)');
-                document.documentElement.style.setProperty('--black', 'rgb(0, 0, 0)');
-            }
-        });
+    // Handle animation speed slider
+    speedSlider.addEventListener('input', (e) => {
+        const newInterval = parseInt(e.target.value);
+        e.target.nextElementSibling.textContent = `${newInterval}ms`;
 
-        // Initialize font handling
-        async function initializeFont(buffer, filename) {  // Add filename parameter
-            // 1. Parse and load the font
-            currentFont = opentype.parse(buffer);
-            updateFontInfo(currentFont, filename);  // Pass filename to updateFontInfo
-            const uniqueFontName = `UploadedFont_${Date.now()}`;
-            const fontFace = new FontFace(uniqueFontName, buffer);
-            await fontFace.load();
-            document.fonts.add(fontFace);
-
-            // 2. Reset the display buffer
-            frontBuffer.style.fontFamily = `"${uniqueFontName}"`;
-            frontBuffer.style.fontSize = `${fontSizeSlider.value}px`;
-            frontBuffer.style.top = '0';
-
-            // 3. Reset all controls to default values
-            // fontSizeSlider.value = 600;
-            // fontSizeSlider.nextElementSibling.textContent = '600px';
-
-            // speedSlider.value = 100;
-            // speedSlider.nextElementSibling.textContent = '100ms';
-
-            // verticalPositionSlider.value = 50;
-            // verticalPositionSlider.nextElementSibling.textContent = '50%';
-
-            // 4. Reset animation state
+        if (animationInterval) {
+            clearTimeout(animationInterval);
             isAnimating = false;
-            if (animationInterval) {
-                clearTimeout(animationInterval);
-            }
-
-            // 5. Reset and recreate variable font axes
-            currentVariationSettings = {};
-            frontBuffer.style.fontVariationSettings = 'normal';
-            clearAxisSliders();
-            if (currentFont.tables.fvar) {
-                currentFont.tables.fvar.axes.forEach(axis => {
-                    createAxisSlider(axis.tag, {
-                        name: getAxisName(axis.tag),
-                        min: axis.minValue,
-                        max: axis.maxValue,
-                        default: axis.defaultValue
-                    });
-                });
-            }
-
-            // 6. Reset glyph order state
-            isRandomOrder = false;
-            const randomizeButton = document.getElementById('randomize-button');
-            randomizeButton.textContent = "Randomize glyph order";
-
-            // 7. Load new glyphs and start animation
-            currentGlyphs = await getGlyphs();
-            sequentialGlyphs = [...currentGlyphs]; // Store original order
-
-            const initialInterval = parseInt(speedSlider.value);
-            isAnimating = true;
-            startAnimation(currentGlyphs, initialInterval);
         }
 
-        // Handle file drop
-        async function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
+        isAnimating = true;
+        startAnimation(currentGlyphs, newInterval);
+    });
 
-            // Remove drop text if it exists
-            const dropText = document.getElementById('drop-text');
-            if (dropText) {
-                dropText.remove();
-            }
+    // Handle vertical position slider
+    verticalPositionSlider.addEventListener('input', (e) => {
+        const reversedPosition = e.target.max - e.target.value;
+        frontBuffer.style.top = `${reversedPosition - 50}%`;
+        e.target.nextElementSibling.textContent = `${reversedPosition}%`;
+    });
 
-            if (!file.name.match(/\.(ttf|otf)$/i)) {
-                alert('Please drop a valid font file (.ttf or .otf)');
-                return;
-            }
+    // Toggle background color
+    document.getElementById('background-toggle').addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        if (isDarkMode) {
+            document.documentElement.style.setProperty('--white', 'rgb(0, 0, 0)');
+            document.documentElement.style.setProperty('--black', 'rgb(255, 255, 255)');
+        } else {
+            document.documentElement.style.setProperty('--white', 'rgb(255, 255, 255)');
+            document.documentElement.style.setProperty('--black', 'rgb(0, 0, 0)');
+        }
+    });
 
-            // Clean up current font
-            cleanupCurrentFont();
+    // Initialize font handling
+    async function initializeFont(buffer, filename) {  // Add filename parameter
+        // 1. Parse and load the font
+        currentFont = opentype.parse(buffer);
+        updateFontInfo(currentFont, filename);  // Pass filename to updateFontInfo
+        const uniqueFontName = `UploadedFont_${Date.now()}`;
+        const fontFace = new FontFace(uniqueFontName, buffer);
+        await fontFace.load();
+        document.fonts.add(fontFace);
 
-            try {
-                const buffer = await file.arrayBuffer();
-                await initializeFont(buffer, file.name);  // Pass filename to initializeFont
-            } catch (error) {
-                console.error('Error loading font:', error);
-                alert(`Error loading font: ${error.message}`);
-                frontBuffer.textContent = '';
-            }
+        // 2. Reset the display buffer
+        frontBuffer.style.fontFamily = `"${uniqueFontName}"`;
+        frontBuffer.style.fontSize = `${fontSizeSlider.value}px`;
+        frontBuffer.style.top = '0';
+
+        // 3. Reset all controls to default values
+        // fontSizeSlider.value = 600;
+        // fontSizeSlider.nextElementSibling.textContent = '600px';
+
+        // speedSlider.value = 100;
+        // speedSlider.nextElementSibling.textContent = '100ms';
+
+        // verticalPositionSlider.value = 50;
+        // verticalPositionSlider.nextElementSibling.textContent = '50%';
+
+        // 4. Reset animation state
+        isAnimating = false;
+        if (animationInterval) {
+            clearTimeout(animationInterval);
         }
 
-        function cleanupCurrentFont() {
-            // Stop animation
-            isAnimating = false;
-            if (animationInterval) {
-                clearTimeout(animationInterval);
-            }
-
-            // Clear current font data
-            currentGlyphs = [];
-            sequentialGlyphs = [];
-            currentVariationSettings = {};
-
-            // Remove the current font from the font registry if it exists
-            if (currentFont) {
-                const currentFontFamily = frontBuffer.style.fontFamily;
-                document.fonts.forEach(font => {
-                    if (font.family === currentFontFamily) {
-                        document.fonts.delete(font);
-                    }
+        // 5. Reset and recreate variable font axes
+        currentVariationSettings = {};
+        frontBuffer.style.fontVariationSettings = 'normal';
+        clearAxisSliders();
+        if (currentFont.tables.fvar) {
+            currentFont.tables.fvar.axes.forEach(axis => {
+                createAxisSlider(axis.tag, {
+                    name: getAxisName(axis.tag),
+                    min: axis.minValue,
+                    max: axis.maxValue,
+                    default: axis.defaultValue
                 });
-            }
+            });
+        }
 
-            // Clear the display
+        // 6. Reset glyph order state
+        isRandomOrder = false;
+        const randomizeButton = document.getElementById('randomize-button');
+        randomizeButton.textContent = "Randomize glyph order";
+
+        // 7. Load new glyphs and start animation
+        currentGlyphs = await getGlyphs();
+        sequentialGlyphs = [...currentGlyphs]; // Store original order
+
+        const initialInterval = parseInt(speedSlider.value);
+        isAnimating = true;
+        startAnimation(currentGlyphs, initialInterval);
+    }
+
+    // Handle file drop
+    async function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+
+        // Remove drop text if it exists
+        const dropText = document.getElementById('drop-text');
+        if (dropText) {
+            dropText.remove();
+        }
+
+        if (!file.name.match(/\.(ttf|otf)$/i)) {
+            alert('Please drop a valid font file (.ttf or .otf)');
+            return;
+        }
+
+        // Clean up current font
+        cleanupCurrentFont();
+
+        try {
+            const buffer = await file.arrayBuffer();
+            await initializeFont(buffer, file.name);  // Pass filename to initializeFont
+        } catch (error) {
+            console.error('Error loading font:', error);
+            alert(`Error loading font: ${error.message}`);
             frontBuffer.textContent = '';
         }
+    }
 
-        // Generate glyphs for display
-        async function getGlyphs() {
-            if (!currentFont) {
-                throw new Error('No font currently loaded');
-            }
-
-            const chars = [];
-            for (let i = 0; i < currentFont.glyphs.length; i++) {
-                const glyph = currentFont.glyphs.get(i);
-                if (glyph.name === '.notdef' || glyph.unicode === undefined) {
-                    continue;
-                }
-                const char = String.fromCodePoint(glyph.unicode);
-                chars.push(char);
-            }
-            return chars;
+    function cleanupCurrentFont() {
+        // Stop animation
+        isAnimating = false;
+        if (animationInterval) {
+            clearTimeout(animationInterval);
         }
 
-        // Update the startAnimation function to use the new animate function
-        async function startAnimation(glyphs, interval) {
-            if (!glyphs || glyphs.length === 0) {
-                console.error('No glyphs available for animation');
+        // Clear current font data
+        currentGlyphs = [];
+        sequentialGlyphs = [];
+        currentVariationSettings = {};
+
+        // Remove the current font from the font registry if it exists
+        if (currentFont) {
+            const currentFontFamily = frontBuffer.style.fontFamily;
+            document.fonts.forEach(font => {
+                if (font.family === currentFontFamily) {
+                    document.fonts.delete(font);
+                }
+            });
+        }
+
+        // Clear the display
+        frontBuffer.textContent = '';
+    }
+
+    // Generate glyphs for display
+    async function getGlyphs() {
+        if (!currentFont) {
+            throw new Error('No font currently loaded');
+        }
+
+        const chars = [];
+        for (let i = 0; i < currentFont.glyphs.length; i++) {
+            const glyph = currentFont.glyphs.get(i);
+            if (glyph.name === '.notdef' || glyph.unicode === undefined) {
+                continue;
+            }
+            const char = String.fromCodePoint(glyph.unicode);
+            chars.push(char);
+        }
+        return chars;
+    }
+
+    // Update the startAnimation function to use the new animate function
+    async function startAnimation(glyphs, interval) {
+        if (!glyphs || glyphs.length === 0) {
+            console.error('No glyphs available for animation');
+            return;
+        }
+
+        isAnimating = true;
+        animate(glyphs, interval);
+    }
+
+    // Create sliders for variable font axes
+    function createAxisSlider(tag, settings) {
+        const container = document.createElement('div');
+        container.className = 'slider-container variation-axis';
+
+        const label = document.createElement('label');
+        label.textContent = `${settings.name} (${tag})`;
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = settings.min;
+        slider.max = settings.max;
+        slider.value = settings.default;
+        slider.step = (settings.max - settings.min) / 1000;
+
+        const value = document.createElement('span');
+        value.className = 'value';
+        value.textContent = settings.default;
+
+        slider.addEventListener('input', (e) => {
+            updateVariationSettings(tag, e.target.value);
+            if (isNaN(currentVariationSettings[tag])) {
+                delete currentVariationSettings[tag];
                 return;
             }
+            const settingsString = Object.entries(currentVariationSettings)
+            .filter(([_, val]) => !isNaN(val))
+            .map(([tag, val]) => `"${tag}" ${val}`)
+            .join(', ');
+            frontBuffer.style.fontVariationSettings = settingsString || 'normal';
+            value.textContent = parseFloat(e.target.value).toFixed(1);
+        });
 
-            isAnimating = true;
-            animate(glyphs, interval);
+        container.appendChild(label);
+        container.appendChild(slider);
+        container.appendChild(value);
+        controls.appendChild(container);
+
+        slider.addEventListener('input', (e) => {
+            currentVariationSettings[tag] = parseFloat(e.target.value);
+            if (isNaN(currentVariationSettings[tag])) {
+                delete currentVariationSettings[tag];
+                return;
+            }
+            const settingsString = Object.entries(currentVariationSettings)
+            .filter(([_, val]) => !isNaN(val))
+            .map(([tag, val]) => `"${tag}" ${val}`)
+            .join(', ');
+            frontBuffer.style.fontVariationSettings = settingsString || 'normal';
+            value.textContent = parseFloat(e.target.value).toFixed(1);
+
+            // Update metrics when axis changes
+            if (document.getElementById('font-metrics-overlay').style.display !== 'none') {
+                renderFontMetricsOverlay(currentFont);
+            }
+        });
+    }
+
+    // Helper to get axis names
+    function getAxisName(tag) {
+        const axisNames = {
+            'wght': 'Weight',
+            'wdth': 'Width',
+            'ital': 'Italic',
+            'slnt': 'Slant',
+            'opsz': 'Optical Size',
+        };
+        return axisNames[tag] || tag;
+    }
+
+    // Clear axis sliders
+    function clearAxisSliders() {
+        const existingSliders = controls.querySelectorAll('.variation-axis');
+        existingSliders.forEach(slider => slider.remove());
+    }
+
+    // Handle randomize button
+    document.getElementById('randomize-button').addEventListener('click', () => {
+        if (isRandomOrder) {
+            currentGlyphs = [...sequentialGlyphs];
+            document.getElementById('randomize-button').textContent = "Randomize glyph order";
+        } else {
+            sequentialGlyphs = [...currentGlyphs];
+            currentGlyphs = shuffleArray(currentGlyphs);
+            document.getElementById('randomize-button').textContent = "Sequential glyph order";
         }
 
-        // Create sliders for variable font axes
-        function createAxisSlider(tag, settings) {
-            const container = document.createElement('div');
-            container.className = 'slider-container variation-axis';
+        isRandomOrder = !isRandomOrder;
+        isAnimating = false;
+        if (animationInterval) clearTimeout(animationInterval);
+        const initialInterval = parseInt(speedSlider.value);
+        startAnimation(currentGlyphs, initialInterval);
+    });
 
-            const label = document.createElement('label');
-            label.textContent = `${settings.name} (${tag})`;
+    // Helper function to shuffle array
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.min = settings.min;
-            slider.max = settings.max;
-            slider.value = settings.default;
-            slider.step = (settings.max - settings.min) / 1000;
+    // Initialize drop handlers
+    document.body.addEventListener('drop', handleDrop, false);
 
-            const value = document.createElement('span');
-            value.className = 'value';
-            value.textContent = settings.default;
+    // Initialize the font info
+    document.getElementById('info-toggle').addEventListener('click', function() {
+        const infoPanel = document.getElementById('font-info');
+        const isVisible = infoPanel.style.display !== 'none';
+        infoPanel.style.display = isVisible ? 'none' : 'block';
+        this.textContent = isVisible ? 'Show info' : 'Hide info';
+    });
 
-            slider.addEventListener('input', (e) => {
-                currentVariationSettings[tag] = parseFloat(e.target.value);
-                if (isNaN(currentVariationSettings[tag])) {
-                    delete currentVariationSettings[tag];
+    // Initialize the glyph info
+    document.getElementById('glyph-info-toggle').addEventListener('click', function() {
+        const infoPanel = document.getElementById('glyph-info');
+        const isVisible = infoPanel.style.display !== 'none';
+        infoPanel.style.display = isVisible ? 'none' : 'block';
+        this.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('font-metrics-overlay');
+        const toggleButton = document.getElementById('metrics-toggle');
+
+        if (overlay && toggleButton) {
+            overlay.style.display = 'none';
+
+            toggleButton.addEventListener('click', function() {
+                if (!currentFont) {
+                    console.error('No font loaded.');
                     return;
                 }
-                const settingsString = Object.entries(currentVariationSettings)
-                .filter(([_, val]) => !isNaN(val))
-                .map(([tag, val]) => `"${tag}" ${val}`)
-                .join(', ');
-                frontBuffer.style.fontVariationSettings = settingsString || 'normal';
-                value.textContent = parseFloat(e.target.value).toFixed(1);
+
+                const isHidden = overlay.style.display === 'none';
+                overlay.style.display = isHidden ? 'block' : 'none';
+
+                if (isHidden) {
+                    renderFontMetricsOverlay(currentFont);
+                    this.innerText = 'Hide metrics';
+                } else {
+                    this.innerText = 'Show metrics';
+                }
             });
-
-            container.appendChild(label);
-            container.appendChild(slider);
-            container.appendChild(value);
-            controls.appendChild(container);
         }
+    });
 
-        // Helper to get axis names
-        function getAxisName(tag) {
-            const axisNames = {
-                'wght': 'Weight',
-                'wdth': 'Width',
-                'ital': 'Italic',
-                'slnt': 'Slant',
-                'opsz': 'Optical Size',
-            };
-            return axisNames[tag] || tag;
+    // Initial state
+    document.getElementById('font-metrics-overlay').style.display = 'none';
+
+    // After document is ready, hide the font info panel and update button text
+    document.addEventListener('DOMContentLoaded', function() {
+        const fontInfo = document.getElementById('font-info');
+        const infoToggle = document.getElementById('info-toggle');
+
+        // Hide the font info panel initially
+        fontInfo.style.display = 'none';
+        // Update the button text to reflect the hidden state
+        infoToggle.textContent = 'Show info';
+    });
+
+    // Event listeners for changes to update the metrics display
+    window.addEventListener('resize', () => {
+        if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
         }
+    });
 
-        // Clear axis sliders
-        function clearAxisSliders() {
-            const existingSliders = controls.querySelectorAll('.variation-axis');
-            existingSliders.forEach(slider => slider.remove());
+    document.getElementById('font-size').addEventListener('input', () => {
+        if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
         }
+    });
 
-        // Handle randomize button
-        document.getElementById('randomize-button').addEventListener('click', () => {
-            if (isRandomOrder) {
-                currentGlyphs = [...sequentialGlyphs];
-                document.getElementById('randomize-button').textContent = "Randomize glyph order";
-            } else {
-                sequentialGlyphs = [...currentGlyphs];
-                currentGlyphs = shuffleArray(currentGlyphs);
-                document.getElementById('randomize-button').textContent = "Sequential glyph order";
-            }
-
-            isRandomOrder = !isRandomOrder;
-            isAnimating = false;
-            if (animationInterval) clearTimeout(animationInterval);
-            const initialInterval = parseInt(speedSlider.value);
-            startAnimation(currentGlyphs, initialInterval);
-        });
-
-        // Helper function to shuffle array
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+    document.getElementById('vertical-position').addEventListener('input', () => {
+        if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
         }
+    });
 
-        // Initialize drop handlers
-        document.body.addEventListener('drop', handleDrop, false);
+    // Horizontal metrics event listeners
+    window.addEventListener('resize', updateMetricsAndSideBearings);
+    document.getElementById('font-size').addEventListener('input', updateMetricsAndSideBearings);
+    document.getElementById('vertical-position').addEventListener('input', updateMetricsAndSideBearings);
 
-        // Initialize the font info
-        document.getElementById('info-toggle').addEventListener('click', function() {
-            const infoPanel = document.getElementById('font-info');
-            const isVisible = infoPanel.style.display !== 'none';
-            infoPanel.style.display = isVisible ? 'none' : 'block';
-            this.textContent = isVisible ? 'Show info' : 'Hide info';
-        });
-
-        // Initialize the glyph info
-        document.getElementById('glyph-info-toggle').addEventListener('click', function() {
-            const infoPanel = document.getElementById('glyph-info');
-            const isVisible = infoPanel.style.display !== 'none';
-            infoPanel.style.display = isVisible ? 'none' : 'block';
-            this.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const overlay = document.getElementById('font-metrics-overlay');
-            const toggleButton = document.getElementById('metrics-toggle');
-
-            if (overlay && toggleButton) {
-                overlay.style.display = 'none';
-
-                toggleButton.addEventListener('click', function() {
-                    if (!currentFont) {
-                        console.error('No font loaded.');
-                        return;
-                    }
-
-                    const isHidden = overlay.style.display === 'none';
-                    overlay.style.display = isHidden ? 'block' : 'none';
-
-                    if (isHidden) {
-                        renderFontMetricsOverlay(currentFont);
-                        this.innerText = 'Hide metrics';
-                    } else {
-                        this.innerText = 'Show metrics';
-                    }
-                });
-            }
-        });
-
-        // Initial state
-        document.getElementById('font-metrics-overlay').style.display = 'none';
-
-        // After document is ready, hide the font info panel and update button text
-        document.addEventListener('DOMContentLoaded', function() {
-            const fontInfo = document.getElementById('font-info');
-            const infoToggle = document.getElementById('info-toggle');
-
-            // Hide the font info panel initially
-            fontInfo.style.display = 'none';
-            // Update the button text to reflect the hidden state
-            infoToggle.textContent = 'Show info';
-        });
-
-        // Event listeners for changes to update the metrics display
-        window.addEventListener('resize', () => {
-            if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
-                renderFontMetricsOverlay(currentFont);
-            }
-        });
-
-        document.getElementById('font-size').addEventListener('input', () => {
-            if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
-                renderFontMetricsOverlay(currentFont);
-            }
-        });
-
-        document.getElementById('vertical-position').addEventListener('input', () => {
-            if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
-                renderFontMetricsOverlay(currentFont);
-            }
-        });
-
-        function renderFontMetricsOverlay(font) {
-            const overlay = document.getElementById('font-metrics-overlay');
-            const glyphDisplay = document.querySelector('.glyph-buffer');
-            const verticalPosition = document.getElementById('vertical-position');
-            const reversedPosition = verticalPosition.max - verticalPosition.value;
-            overlay.innerHTML = '';
-
-            const fontSize = parseInt(getComputedStyle(glyphDisplay).fontSize);
-            const scale = fontSize / font.unitsPerEm;
-
-            const glyphRect = glyphDisplay.getBoundingClientRect();
-            const baselineOffset = (font.tables.os2.sTypoAscender * scale);
-            const baseline = glyphRect.top + baselineOffset;
-
-            function createMetricLine(yPosition, label) {
-                const line = document.createElement('div');
-                line.className = 'metric-line';
-                line.style.top = `${yPosition}px`;
-
-                const legend = document.createElement('div');
-                legend.className = 'legend';
-                legend.style.top = `${yPosition - 21}px`;
-                legend.innerText = label;
-
-                overlay.appendChild(line);
-                overlay.appendChild(legend);
-            }
-
-            createMetricLine(baseline, 'Baseline');
-            createMetricLine(baseline - (font.tables.os2.sTypoAscender * scale), 'Ascender');
-            createMetricLine(baseline + -(font.tables.os2.sTypoDescender * scale), 'Descender');
-            createMetricLine(baseline - (font.tables.os2.sxHeight * scale), 'x-Height');
-            createMetricLine(baseline - (font.tables.os2.sCapHeight * scale), 'Cap Height');
-
-            if (font.tables.os2.sSmallCapHeight) {
-                createMetricLine(baseline - (font.tables.os2.sSmallCapHeight * scale), 'Small Caps');
-            }
-
-            const currentGlyph = font.charToGlyph(glyphDisplay.textContent);
-            const leftSideBearing = currentGlyph.leftSideBearing * scale;
-            const rightSideBearing = (currentGlyph.advanceWidth - currentGlyph.leftSideBearing - currentGlyph.xMax) * scale;
-
-            const leftLine = document.createElement('div');
-            leftLine.className = 'side-bearing-line';
-            leftLine.style.left = `${glyphRect.left + leftSideBearing}px`;
-            overlay.appendChild(leftLine);
-
-            const rightLine = document.createElement('div');
-            rightLine.className = 'side-bearing-line';
-            rightLine.style.right = `${glyphRect.right - rightSideBearing}px`;
-            overlay.appendChild(rightLine);
+    function updateMetricsAndSideBearings() {
+        if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
         }
-    </script>
+    }
+
+    // Add variable axis update handler
+    document.addEventListener('variationchange', () => {
+        if (currentFont && document.getElementById('font-metrics-overlay').style.display !== 'none') {
+            renderFontMetricsOverlay(currentFont);
+        }
+    });
+
+    // Dispatch event when axis values change
+    function updateVariationSettings(tag, value) {
+        currentVariationSettings[tag] = parseFloat(value);
+        const event = new Event('variationchange');
+        document.dispatchEvent(event);
+    }
+</script>
 </body>
 </html>
