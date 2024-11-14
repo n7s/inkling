@@ -353,7 +353,7 @@
     </div>
 
     <div id="drop-text">
-        Drop your font here
+        Drop your TTF or OTF font here
     </div>
     <div class="display-container">
         <div class="glyph-buffer" id="glyph-display" style="font-size: 600px;"></div>
@@ -386,8 +386,8 @@
             <span class="value">50%</span>
         </div>
         <div class="slider-container">
-            <label for="animation-speed">Animation speed</label>
-            <input type="range" id="animation-speed" min="50" max="500" value="100">
+            <label for="animation-dalay">Animation delay</label>
+            <input type="range" id="animation-dalay" min="50" max="500" value="100">
             <span class="value">100ms</span>
         </div>
     </div>
@@ -690,7 +690,7 @@
 
     // Slider elements
     const fontSizeSlider = document.getElementById('font-size');
-    const speedSlider = document.getElementById('animation-speed');
+    const speedSlider = document.getElementById('animation-dalay');
     const verticalPositionSlider = document.getElementById('vertical-position');
 
     // Prevent default drag behaviors
