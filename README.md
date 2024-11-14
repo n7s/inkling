@@ -26,6 +26,9 @@ If you want to see some information about the font there is a button for that.
 If you want to see some information about the currently displayed glyph there is a button for that.
 ![Glyph info](images/glyph-info.png)
 
+If you want to see the vertical and horizontal metrics there is a button for that.
+![Glyph info](images/metrics.png)
+
 In the upper right corner there is a `Fullscreen` button. It full-screens **HyperFlipBX90000Dominator**.
 
 In the control panel there is a `Randomize glyph order` button. It randomises the glyph order. Press it again and it reverts to sequential glyph order.
