@@ -1012,7 +1012,7 @@
         const infoPanel = document.getElementById('font-info');
         const isVisible = infoPanel.style.display !== 'none';
         infoPanel.style.display = isVisible ? 'none' : 'block';
-        this.textContent = isVisible ? 'Show info' : 'Hide info';
+        this.textContent = isVisible ? 'Show font info' : 'Hide font info';
     });
 
     // Initialize the glyph info
@@ -1060,7 +1060,7 @@
         // Hide the font info panel initially
         fontInfo.style.display = 'none';
         // Update the button text to reflect the hidden state
-        infoToggle.textContent = 'Show info';
+        infoToggle.textContent = 'Show font info';
     });
 
     // Event listeners for changes to update the metrics display
