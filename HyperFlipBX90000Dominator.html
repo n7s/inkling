@@ -540,6 +540,7 @@
                 created: head?.created ? new Date(head.created * 1000).toLocaleDateString() : 'Unknown',
                 modified: head?.modified ? new Date(head.modified * 1000).toLocaleDateString() : 'Unknown',
                 glyphCount: font.glyphs.length,
+                isFixedPitch: font.tables.post?.isFixedPitch ? 'Yes' : 'No',
                 axes: font.tables.fvar ? font.tables.fvar.axes.map(axis => ({
                     tag: axis.tag,
                     name: getAxisName(axis.tag),
@@ -563,7 +564,8 @@
         Filename &rarr; ${info.filename}<br>
         File format &rarr; ${info.format}<br>
         Units per Em &rarr; ${info.unitsPerEm}<br>
-        Glyph count &rarr; ${info.glyphCount}</p>
+        Glyph count &rarr; ${info.glyphCount}<br>
+        Monospaced &rarr; ${info.isFixedPitch}</p>
 
         <p><strong>Version and dates</strong><br>
         Version &rarr; ${info.version}<br>
