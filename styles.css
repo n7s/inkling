@@ -49,7 +49,8 @@ p > semibold {
 #glyph-info-toggle,
 #metrics-toggle,
 #background-toggle,
-#randomize-button {
+#randomize-button,
+#features-toggle {
   font-size: 0.7rem;
   cursor: pointer;
   font-style: roman;
