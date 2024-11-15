@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WordMaster BX90000 Excelsior</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+    <style>
+        :root {
+            --system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            --system-mono: ui-monospace, "SF Mono", SFMono-Regular, "DejaVu Sans Mono", Menlo, Consolas, monospace;
+            --white: rgb(255,255,255);
+            --black: rgb(0,0,0);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--system-ui);
+            font-size: 0.7rem;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--white);
+            font-family: var(--system-ui);
+            overflow: hidden;
+        }
+
+        em {
+            font-style: italic;
+        }
+
+        p > semibold {
+            font-weight: 600;
+        }
+
+        .monospaced {
+            font-family: var(--system-mono);
+        }
+
+        #fullScreen {
+            float: right;
+            margin-left: auto;
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 10000;
+        }
+
+        .buttons-container {
+            margin-left: 139px;
+        }
+
+        #fullScreen button,
+        #info-toggle,
+        #glyph-info-toggle,
+        #metrics-toggle,
+        #background-toggle,
+        #features-toggle {
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-style: roman;
+            -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+            height: 23px;
+            padding-left: 8px;
+            padding-right: 8px;
+            background: transparent; /* Otherwise white in Chrome */
+            color: var(--black);
+            background: transparent;
+            border: 1px solid var(--black);
+            opacity: 1;
+            border-radius: 5px;
+            -webkit-transition: .2s;
+            transition: .2s;
+        }
+
+        .buttons-container button {
+            margin-right: 5px;
+        }
+
+        #fullScreen button {
+            width: 100%; /* Specific width is required for Firefox. */
+        }
+
+        #fullScreen button > span {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1em;
+        }
+
+        #drop-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem;
+            color: var(--black);
+            pointer-events: none;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        #dropZone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--white);
+            transition: background 0.3s;
+            z-index: 1;
+        }
+
+        #dropZone.dragover {
+            background: var(--white);
+        }
+
+        #dropZone.hidden {
+            display: none;
+        }
+
+        #initialMessage {
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            color: var(--black);
+            font-size: 0.7rem;
+        }
+
+        #font-info,
+        #feature-info {
+            position: fixed;
+            top: 0px;
+            height: auto;
+            width: 300px;
+            margin: 0px;
+            padding: 14px;
+            color: var(--black);
+            background: var(--white);
+            z-index: 10000;
+        }
+
+        #font-info {
+            left: 0px;
+        }
+
+        #feature-info {
+            left: 314px;
+        }
+
+        #font-info-content {
+            float: left;
+            margin-right: auto;
+            width: 300px;
+            color: var(--black);
+            top: 14px;
+            left: 14px;
+        }
+
+        #font-info-content > p {
+            margin-block-start: 0px;
+            padding-top: 0px;
+            margin-top: 0px;
+            margin-bottom: 1rem;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 0px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            padding: 7px;
+            /* box-shadow: 0 -2px 10px rgba(0,0,0,0.1); */
+            z-index: 20;
+        }
+
+        #controls:hover {
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        #word {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        #word span {
+            color: var(--black);
+            white-space: nowrap;
+            display: block;
+            width: calc(100vw - 40px);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        #word.fade-out {
+            opacity: 0;
+        }
+
+        #currentSettings {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 15px;
+            background: var(--black)
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2;
+        }
+
+        .slider-container {
+            margin-top: 7px;
+            margin-bottom: 7px;
+            padding-left: 7px;
+            padding-right: 7px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container label {
+            color: var(--black);
+            font-size: 0.7rem;
+            min-width: 120px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-container .value {
+            color: var(--black);
+            font-size: 0.7rem;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Styling of the sliders */
+        /* Hide the default appearance */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;  /* Set the width to the desired size */
+            height: 1px;  /* The height of the slider track */
+            background: var(--black); /* Background line color */
+            border-radius: none;
+            outline: none;
+        }
+
+        /* Track styling */
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 1px;
+            background: var(--black);
+            border-radius: none;
+        }
+
+        input[type="range"]::-moz-range-track {
+            height: 1px;
+            background: var(--black);
+            border-radius: none;
+        }
+
+        /* Handle (thumb) styling */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: var(--black);
+            border: none;
+            border-radius: 50%; /* Make it a circle */
+            cursor: pointer;
+            margin-top: -7px; /* Center the thumb on the line */
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--black);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Optional: focus state for accessibility */
+        input[type="range"]:focus::-webkit-slider-thumb {
+            box-shadow: none;
+        }
+
+        input[type="range"]:focus::-moz-range-thumb {
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="fullScreen">
+        <button id="fullscreenButton" onClick="fullscreenToggle()"><span>Fullscreen</span></button>
+    </div>
+
+    <div id="dropZone">
+        <div id="initialMessage">Drop your TTF or OTF font here</div>
+    </div>
+
+    <div id="word">
+        <span></span>
+    </div>
+
+    <div id="feature-info"></div>
+
+    <div id="currentSettings"></div>
+
+    <div id="font-info">
+        <div id="font-info-content"></div>
+    </div>
+
+    <div id="controls">
+        <button id="info-toggle">Show font info</button>
+        <button id="features-toggle">Show features</button>
+        <button id="background-toggle">Swap colours</button>
+        <div id="axis-sliders"></div>
+    </div>
+
+    <script>
+        /* Global Variables - Declare all at the top */
+        const elem = document.documentElement;
+        let fullScreen = false;
+        const fullscreenButton = document.getElementById("fullscreenButton");
+
+        const dropZone = document.getElementById('dropZone');
+        const wordElement = document.querySelector('#word span');
+        const wordContainer = document.getElementById('word');
+        const fontInfo = document.getElementById('fontInfo');
+        const currentSettings = document.getElementById('currentSettings');
+        const detailedFontInfo = document.getElementById('font-info-content');
+
+        let loadedFont = null;
+        let fontFeatures = [];
+        let variationAxes = [];
+        let wordInterval;
+        let currentVariationSettings = {};
+
+        const words = [
+            'Hello', 'World', 'OpenType', 'Features', 'Typography',
+            'Design', 'Creative', 'Awesome', 'Beautiful', 'Elegant',
+            'Explore', 'Wonder', 'Magic', 'Journey', 'Dream'
+        ];
+
+        /* Fullscreen Functions */
+        function openFullscreen() {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+            fullScreen = true;
+            fullscreenButton.innerHTML = "Windowed";
+        }
+
+        function closeFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            fullScreen = false;
+            fullscreenButton.innerHTML = "Fullscreen";
+        }
+
+        function fullscreenToggle() {
+            if (fullScreen) {
+                closeFullscreen();
+            } else {
+                openFullscreen();
+            }
+        }
+
+        function exitHandler() {
+            if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
+                closeFullscreen();
+            }
+        }
+
+        /* Helper Functions */
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            preventDefaults(e);
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            preventDefaults(e);
+            dropZone.classList.remove('dragover');
+        }
+
+        function getAxisName(tag) {
+            const axisNames = {
+                'wght': 'Weight',
+                'wdth': 'Width',
+                'ital': 'Italic',
+                'slnt': 'Slant',
+                'opsz': 'Optical Size',
+            };
+            return axisNames[tag] || tag;
+        }
+
+        function displayFontInfo() {
+            const names = loadedFont.names;
+            const os2 = loadedFont.tables.os2;
+            const head = loadedFont.tables.head;
+
+            let info = `
+                <p><strong>Names</strong><br>
+                Font family → ${names.fontFamily?.en || 'Unknown'}<br>
+                Full name → ${names.fullName?.en || 'Unknown'}</p>
+
+                <p><strong>Font file</strong><br>
+                File format → ${loadedFont.outlinesFormat}<br>
+                Units per Em → ${head?.unitsPerEm || 'Unknown'}<br>
+                Created → ${head?.created ? new Date(head.created * 1000).toLocaleDateString() : 'Unknown'}<br>
+                Modified → ${head?.modified ? new Date(head.modified * 1000).toLocaleDateString() : 'Unknown'}</p>
+
+                <p><strong>Foundry</strong><br>
+                Manufacturer → ${names.manufacturer?.en || 'Unknown'}<br>
+                Designer → ${names.designer?.en || 'Unknown'}<br>
+                Vendor ID → ${os2?.achVendID || 'Unknown'}</p>
+            `;
+
+            if (variationAxes.length > 0) {
+                info += `<p><strong>Variable font axes</strong><br>
+                ${variationAxes.map(axis =>
+                    `${getAxisName(axis.tag)} (${axis.tag}) → ${axis.minValue} to ${axis.maxValue}, default → ${axis.defaultValue}`
+                ).join('<br>')}</p>`;
+            }
+
+            // Update feature info
+            const featureInfo = document.getElementById('feature-info');
+            featureInfo.innerHTML = `<strong>${names.fullName?.en || 'Unknown Font'}</strong>`;
+            if (fontFeatures.length > 0) {
+                featureInfo.innerHTML += `<br>Features: ${fontFeatures.join(', ')}`;
+            }
+
+            // Update detailed font info
+            detailedFontInfo.innerHTML = info;
+        }
+
+        /* File Handling Functions */
+        function handleFiles(files) {
+            const file = files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                try {
+                    loadedFont = opentype.parse(arrayBuffer);
+
+                    fontFeatures = [];
+                    if (loadedFont.tables.gsub) {
+                        const features = loadedFont.tables.gsub.features;
+                        features.forEach(feature => {
+                            fontFeatures.push(feature.tag);
+                        });
+                    }
+
+                    variationAxes = [];
+                    if (loadedFont.tables.fvar) {
+                        variationAxes = loadedFont.tables.fvar.axes;
+                    }
+
+                    displayFontInfo();
+                    createAxisSliders();
+
+                    const fontFace = new FontFace('LoadedFont', arrayBuffer);
+                    fontFace.load().then(function(loadedFace) {
+                        document.fonts.add(loadedFace);
+                        dropZone.classList.add('hidden');
+                        startWordAnimation();
+                    });
+                } catch (err) {
+                    console.error('Error loading font:', err);
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleDrop(e) {
+            preventDefaults(e);
+            unhighlight(e);
+
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.match(/\.(otf|ttf)$/i)) {
+                    handleFiles(files);
+                }
+            }
+        }
+
+        /* Variable Font Functions */
+        function createAxisSliders() {
+            const container = document.getElementById('axis-sliders');
+            container.innerHTML = '';
+
+            if (!variationAxes.length) return;
+
+            variationAxes.forEach(axis => {
+                const sliderContainer = document.createElement('div');
+                sliderContainer.className = 'slider-container variation-axis';
+
+                const label = document.createElement('label');
+                label.textContent = `${getAxisName(axis.tag)} (${axis.tag})`;
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = axis.minValue;
+                slider.max = axis.maxValue;
+                slider.value = axis.defaultValue;
+                slider.step = (axis.maxValue - axis.minValue) / 1000;
+
+                const value = document.createElement('span');
+                value.className = 'value';
+                value.textContent = axis.defaultValue;
+
+                slider.addEventListener('input', (e) => {
+                    value.textContent = parseFloat(e.target.value).toFixed(1);
+                    currentVariationSettings[axis.tag] = parseFloat(e.target.value);
+                    updateVariationSettings();
+                });
+
+                sliderContainer.appendChild(label);
+                sliderContainer.appendChild(slider);
+                sliderContainer.appendChild(value);
+                container.appendChild(sliderContainer);
+            });
+        }
+
+        function updateVariationSettings() {
+            if (Object.keys(currentVariationSettings).length === 0) return;
+
+            const settingsString = Object.entries(currentVariationSettings)
+                .map(([tag, value]) => `"${tag}" ${value}`)
+                .join(', ');
+
+            wordElement.style.fontVariationSettings = settingsString || 'normal';
+            fitTextToWindow(wordElement);
+        }
+
+        /* Word Animation Functions */
+        function getRandomWord() {
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        function fitTextToWindow(element) {
+            const containerWidth = window.innerWidth - 40;
+            const measureDiv = document.createElement('div');
+            measureDiv.style.visibility = 'hidden';
+            measureDiv.style.position = 'absolute';
+            measureDiv.style.fontFamily = element.style.fontFamily;
+            measureDiv.style.fontFeatureSettings = element.style.fontFeatureSettings;
+            measureDiv.style.fontVariationSettings = element.style.fontVariationSettings;
+            measureDiv.style.whiteSpace = 'nowrap';
+            measureDiv.textContent = element.textContent;
+            document.body.appendChild(measureDiv);
+
+            const fontSize = 100;
+            measureDiv.style.fontSize = `${fontSize}px`;
+            const scale = containerWidth / measureDiv.offsetWidth;
+            const targetSize = Math.floor(fontSize * scale);
+
+            element.style.fontSize = `${targetSize}px`;
+            document.body.removeChild(measureDiv);
+        }
+
+        function updateWord() {
+            wordContainer.classList.add('fade-out');
+
+            setTimeout(() => {
+                const word = getRandomWord();
+                wordElement.textContent = word;
+                wordElement.style.fontFamily = 'LoadedFont';
+
+                let currentFeature = null;
+                if (fontFeatures.length > 0) {
+                    currentFeature = fontFeatures[Math.floor(Math.random() * fontFeatures.length)];
+                    wordElement.style.fontFeatureSettings = `"${currentFeature}" 1`;
+                } else {
+                    wordElement.style.fontFeatureSettings = 'normal';
+                }
+
+                if (Object.keys(currentVariationSettings).length > 0) {
+                    updateVariationSettings();
+                }
+
+                fitTextToWindow(wordElement);
+                wordContainer.classList.remove('fade-out');
+            }, 300);
+        }
+
+        function startWordAnimation() {
+            updateWord();
+            wordInterval = setInterval(updateWord, 3000);
+        }
+
+        /* Event Listeners */
+        document.addEventListener('fullscreenchange', exitHandler);
+        document.addEventListener('webkitfullscreenchange', exitHandler);
+        document.addEventListener('mozfullscreenchange', exitHandler);
+        document.addEventListener('MSFullscreenChange', exitHandler);
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, preventDefaults, false);
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        dropZone.addEventListener('dragenter', highlight, false);
+        dropZone.addEventListener('dragover', highlight, false);
+        dropZone.addEventListener('dragleave', unhighlight, false);
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        window.addEventListener('resize', () => {
+            if (wordElement.textContent) {
+                fitTextToWindow(wordElement);
+            }
+        });
+
+        document.getElementById('info-toggle').addEventListener('click', function() {
+            const infoPanel = document.getElementById('font-info');
+            const isVisible = infoPanel.style.display !== 'none';
+            infoPanel.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? 'Show font info' : 'Hide font info';
+        });
+
+        document.getElementById('background-toggle').addEventListener('click', function() {
+            const root = document.documentElement;
+            const currentWhite = getComputedStyle(root).getPropertyValue('--white');
+
+            if (currentWhite.includes('255')) {
+                root.style.setProperty('--white', 'rgb(0, 0, 0)');
+                root.style.setProperty('--black', 'rgb(255, 255, 255)');
+            } else {
+                root.style.setProperty('--white', 'rgb(255, 255, 255)');
+                root.style.setProperty('--black', 'rgb(0, 0, 0)');
+            }
+        });
+
+        document.getElementById('features-toggle').addEventListener('click', function() {
+            const featurePanel = document.getElementById('feature-info');
+            const isVisible = featurePanel.style.display !== 'none';
+            featurePanel.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? 'Show features' : 'Hide features';
+        });
+    </script>
+</body>
+</html>
