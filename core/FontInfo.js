@@ -66,16 +66,16 @@ export class FontInfoRenderer {
     container.innerHTML = `
       <p><strong>Glyph information</strong><br>
       Character &rarr; ${glyph}<br>
-      Unicode &rarr; U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || 'N/A'}<br>
-      Name &rarr; ${glyphObj.name}<br>
-      Index &rarr; ${glyphIndex}<br>
-      Advance Width &rarr; ${glyphObj.advanceWidth}</p>
+      Name &rarr; <span class="monospaced">${glyphObj.name}</span><br>
+      Unicode &rarr; <span class="monospaced">U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || 'N/A'}</span><br>
+      Index &rarr; <span class="monospaced">${glyphIndex}</span><br>
+      Advance Width &rarr; <span class="monospaced">${glyphObj.advanceWidth}</span></p>
       ${glyphObj.xMin !== undefined ? `
       <p><strong>Bounds</strong><br>
-      xMin &rarr; ${glyphObj.xMin}<br>
-      xMax &rarr; ${glyphObj.xMax}<br>
-      yMin &rarr; ${glyphObj.yMin}<br>
-      yMax &rarr; ${glyphObj.yMax}</p>
+      xMin &rarr; <span class="monospaced">${glyphObj.xMin}</span><br>
+      xMax &rarr; <span class="monospaced">${glyphObj.xMax}</span><br>
+      yMin &rarr; <span class="monospaced">${glyphObj.yMin}</span><br>
+      yMax &rarr; <span class="monospaced">${glyphObj.yMax}</span></p>
       ` : ''}
     `;
   }
