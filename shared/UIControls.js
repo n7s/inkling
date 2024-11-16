@@ -3,31 +3,20 @@
 // =============================================================================
 
 export class UIControls {
-  /**
-   * Creates a new UIControls instance
-   * @param {Object} options - Configuration options
-   */
   constructor(options = {}) {
     this.isDarkMode = false;
     this.isFullscreen = false;
     this.setupEventListeners();
   }
 
-  /**
-   * Sets up event listeners for UI controls
-   * @private
-   */
   setupEventListeners() {
-    // Fullscreen controls
+    // Fullscreen change events for different browsers
     document.addEventListener('fullscreenchange', this.handleFullscreenChange.bind(this));
     document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
     document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
     document.addEventListener('MSFullscreenChange', this.handleFullscreenChange.bind(this));
   }
 
-  /**
-   * Toggles fullscreen mode
-   */
   toggleFullscreen() {
     if (this.isFullscreen) {
       this.exitFullscreen();
@@ -36,10 +25,6 @@ export class UIControls {
     }
   }
 
-  /**
-   * Enters fullscreen mode
-   * @private
-   */
   enterFullscreen() {
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
@@ -51,10 +36,6 @@ export class UIControls {
     }
   }
 
-  /**
-   * Exits fullscreen mode
-   * @private
-   */
   exitFullscreen() {
     if (document.exitFullscreen) {
       document.exitFullscreen();
@@ -65,9 +46,21 @@ export class UIControls {
     }
   }
 
-  /**
-   * Toggles dark/light mode
-   */
+  handleFullscreenChange() {
+    this.isFullscreen = Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+
+    // Update button text if needed
+    const fullscreenButton = document.querySelector('#fullScreen button');
+    if (fullscreenButton) {
+      fullscreenButton.textContent = this.isFullscreen ? 'Windowed' : 'Fullscreen';
+    }
+  }
+
   toggleColorScheme() {
     this.isDarkMode = !this.isDarkMode;
     document.documentElement.style.setProperty(
@@ -77,19 +70,6 @@ export class UIControls {
     document.documentElement.style.setProperty(
       '--black',
       this.isDarkMode ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)'
-    );
-  }
-
-  /**
-   * Handles fullscreen change events
-   * @private
-   */
-  handleFullscreenChange() {
-    this.isFullscreen = Boolean(
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement
     );
   }
 }

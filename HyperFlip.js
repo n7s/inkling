@@ -46,8 +46,19 @@ class FontViewer {
   }
 
   setupEventListeners() {
+    // Add fullscreen button listener
+    const fullscreenButton = document.querySelector('#fullScreen button');
+    if (fullscreenButton) {
+      fullscreenButton.addEventListener('click', () => {
+        this.uiControls.toggleFullscreen();
+        fullscreenButton.textContent = this.uiControls.isFullscreen ? 'Windowed' : 'Fullscreen';
+      });
+    }
+
+    // Add keyboard controls
     document.addEventListener('keydown', this.handleKeyPress.bind(this));
 
+    // Add other UI control listeners
     document.getElementById('metrics-toggle')
       ?.addEventListener('click', () => this.metricsOverlay.toggle());
 
