@@ -108,7 +108,7 @@ p > semibold {
 
 .glyph-buffer {
   color: var(--black);
-  font-size: 120px;
+  font-size: 600px;
   text-align: center;
   position: relative;
 }

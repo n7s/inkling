@@ -64,7 +64,7 @@ export class FontInfoRenderer {
     const glyphObj = font.glyphs.get(glyphIndex);
 
     container.innerHTML = `
-      <p><strong>Glyph Information</strong><br>
+      <p><strong>Glyph information</strong><br>
       Character &rarr; ${glyph}<br>
       Unicode &rarr; U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || 'N/A'}<br>
       Name &rarr; ${glyphObj.name}<br>

@@ -176,6 +176,7 @@ class FontViewer {
     // Update display settings
     const display = document.querySelector('.glyph-buffer');
     display.style.fontFamily = `"${fontFamily}"`;
+    display.style.fontSize = '600px';  // Set initial size to match slider
 
     // Update font info panel
     const fontInfoContent = document.getElementById('font-info-content');
