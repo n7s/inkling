@@ -15,7 +15,7 @@ export class MetricsOverlay {
     const currentChar = glyphElement.textContent;
     const metrics = this.calculateMetrics(font, glyphElement, currentChar);
 
-    this.renderMetricLines(metrics);
+    this.renderMetricLines(metrics, font);
     this.renderBearingLines(metrics);
   }
 
@@ -23,38 +23,48 @@ export class MetricsOverlay {
     const glyphIndex = font.charToGlyphIndex(currentChar);
     const glyph = font.glyphs.get(glyphIndex);
     const fontSize = parseInt(getComputedStyle(glyphElement).fontSize);
-    const metricsScale = fontSize / font.unitsPerEm;
 
+    // Use the font's actual UPM value
+    const unitsPerEm = font.unitsPerEm;
+    const metricsScale = fontSize / unitsPerEm;
+
+    // Get the glyph element's position
     const glyphRect = glyphElement.getBoundingClientRect();
-    const containerCenter = glyphRect.left + (glyphRect.width / 2);
-    const advanceScale = glyphRect.width / glyph.advanceWidth;
+    const verticalCenter = glyphRect.top + (glyphRect.height / 2);
+    const horizontalCenter = glyphRect.left + (glyphRect.width / 2);
 
-    // Get vertical position from slider (0-100)
-    const verticalPositionSlider = document.getElementById('vertical-position');
-    const verticalPosition = verticalPositionSlider ?
-      parseInt(verticalPositionSlider.value) / 100 : 0.5;
+    // The total height in font units from descender to ascender
+    const totalHeight = font.tables.os2.sTypoAscender - font.tables.os2.sTypoDescender;
 
-    // Calculate baseline position with the cap height offset correction
-    const capHeightOffset = (font.tables.os2.sCapHeight * metricsScale) / 2;
-    const baseline = glyphRect.top + (glyphRect.height * verticalPosition) + capHeightOffset;
+    // Calculate how much of the total height is above the baseline (in font units)
+    const baselineOffset = font.tables.os2.sTypoAscender;
+
+    // Calculate where the baseline should be relative to the center
+    // First, get the ratio of the baseline position within the total height
+    const baselineRatio = baselineOffset / totalHeight;
+
+    // Scale the total height to pixels
+    const totalPixelHeight = (totalHeight / unitsPerEm) * fontSize;
+
+    // Position the baseline
+    const baseline = verticalCenter - (totalPixelHeight / 2) + (baselineRatio * totalPixelHeight);
 
     return {
       glyph,
       fontSize,
       metricsScale,
       glyphRect,
-      containerCenter,
-      advanceScale,
+      containerCenter: horizontalCenter,
       baseline,
-      // Calculate all other metrics normally relative to the corrected baseline
+      // Calculate other metrics relative to the baseline using the metricsScale
       ascender: baseline - (font.tables.os2.sTypoAscender * metricsScale),
-      descender: baseline + (Math.abs(font.tables.os2.sTypoDescender) * metricsScale),
+      descender: baseline - (font.tables.os2.sTypoDescender * metricsScale),
       capHeight: baseline - (font.tables.os2.sCapHeight * metricsScale),
       xHeight: baseline - (font.tables.os2.sxHeight * metricsScale)
     };
   }
 
-  renderMetricLines(metrics) {
+  renderMetricLines(metrics, font) {
     const lines = [
       { pos: metrics.baseline, label: 'Baseline' },
       { pos: metrics.ascender, label: 'Ascender' },
@@ -63,31 +73,42 @@ export class MetricsOverlay {
       { pos: metrics.xHeight, label: 'x-height' }
     ];
 
+    if (font.tables.os2.sSmallCapHeight) {
+      lines.push({
+        pos: metrics.baseline - (font.tables.os2.sSmallCapHeight * metrics.metricsScale),
+        label: 'Small Caps'
+      });
+    }
+
     lines.forEach(({ pos, label }) => {
-      const line = document.createElement('div');
-      line.className = 'metric-line';
-      line.style.top = `${pos}px`;
+      if (isFinite(pos)) {
+        const line = document.createElement('div');
+        line.className = 'metric-line';
+        line.style.top = `${pos}px`;
 
-      const legend = document.createElement('div');
-      legend.className = 'legend';
-      legend.style.top = `${pos - 21}px`;
-      legend.textContent = label;
+        const legend = document.createElement('div');
+        legend.className = 'legend';
+        legend.style.top = `${pos - 21}px`;
+        legend.textContent = label;
 
-      this.overlay.appendChild(line);
-      this.overlay.appendChild(legend);
+        this.overlay.appendChild(line);
+        this.overlay.appendChild(legend);
+      }
     });
   }
 
   renderBearingLines(metrics) {
-    const scaledAdvanceWidth = metrics.glyph.advanceWidth * metrics.advanceScale;
+    const scaledAdvanceWidth = metrics.glyph.advanceWidth * metrics.metricsScale;
     const leftPos = metrics.containerCenter - (scaledAdvanceWidth / 2);
     const rightPos = leftPos + scaledAdvanceWidth;
 
     [leftPos, rightPos].forEach(pos => {
-      const line = document.createElement('div');
-      line.className = 'side-bearing-line';
-      line.style.left = `${pos}px`;
-      this.overlay.appendChild(line);
+      if (isFinite(pos)) {
+        const line = document.createElement('div');
+        line.className = 'side-bearing-line';
+        line.style.left = `${pos}px`;
+        this.overlay.appendChild(line);
+      }
     });
   }
 
