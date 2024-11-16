@@ -23,21 +23,24 @@ export class WordAnimator {
     });
 
     this.dragAndDrop = new DragAndDrop({
-      dropZone: document.body,  // Changed from dropZone to document.body
+      dropZone: document.body,
       onDrop: (buffer, filename) => this.fontLoader.loadFont(buffer, filename)
     });
 
     this.uiControls = new UIControls();
-    this.textFitter = new TextFitter();
+    this.textFitter = new TextFitter({ padding: 40 }); // Initialize with padding
 
     this.setupEventListeners();
     this.loadWordList();
+
+    // Add window resize handler
+    window.addEventListener('resize', () => {
+      if (this.container.firstChild) {
+        this.textFitter.fitText(this.container.firstChild, this.container);
+      }
+    });
   }
 
-  /**
-   * Loads word list from external file
-   * @private
-   */
   async loadWordList() {
     try {
       const response = await fetch('../word_lists/synthetic_words.txt');
@@ -45,15 +48,10 @@ export class WordAnimator {
       this.wordList = text.split('\n').filter(word => word.trim());
     } catch (error) {
       console.error('Error loading word list:', error);
-      // Fallback to some default words if loading fails
       this.wordList = ['OpenType', 'Features', 'Typography', 'Design'];
     }
   }
 
-  /**
-   * Sets up event listeners for UI controls
-   * @private
-   */
   setupEventListeners() {
     document.getElementById('font-info-toggle')?.addEventListener('click', () => {
       const fontInfo = document.getElementById('font-info');
@@ -70,10 +68,6 @@ export class WordAnimator {
     });
   }
 
-  /**
-   * Handles font loading completion
-   * @private
-   */
   handleFontLoaded({ font, fontInfo, fontFamily }) {
     FontInfoRenderer.renderFontInfo(
       document.getElementById('font-info-content'),
@@ -84,12 +78,7 @@ export class WordAnimator {
     this.start();
   }
 
-  /**
-   * Starts word animation
-   * @param {number} interval - Animation interval in milliseconds
-   */
   async start(interval = 3000) {
-    // Make sure words are loaded before starting animation
     if (this.wordList.length === 0) {
       await this.loadWordList();
     }
@@ -97,9 +86,6 @@ export class WordAnimator {
     this.animationInterval = setInterval(() => this.updateWord(), interval);
   }
 
-  /**
-   * Stops word animation
-   */
   stop() {
     if (this.animationInterval) {
       clearInterval(this.animationInterval);
@@ -107,10 +93,6 @@ export class WordAnimator {
     }
   }
 
-  /**
-   * Updates displayed word with random feature
-   * @private
-   */
   updateWord() {
     if (this.wordList.length === 0) return;
 
@@ -120,6 +102,7 @@ export class WordAnimator {
       const word = this.getRandomWord();
       const wordElement = document.createElement('div');
       wordElement.textContent = word;
+      wordElement.style.whiteSpace = 'nowrap'; // Prevent word wrapping
 
       if (this.features.length > 0) {
         const feature = this.getRandomFeature();
@@ -129,25 +112,18 @@ export class WordAnimator {
 
       this.container.innerHTML = '';
       this.container.appendChild(wordElement);
-      this.container.classList.remove('fade-out');
 
       // Fit text to container
-      this.textFitter.fitText(wordElement, this.container);
+      this.textFitter.fitText(wordElement, document.querySelector('.display-container'));
+
+      this.container.classList.remove('fade-out');
     }, 300);
   }
 
-  /**
-   * Gets a random word from the word list
-   * @private
-   */
   getRandomWord() {
     return this.wordList[Math.floor(Math.random() * this.wordList.length)];
   }
 
-  /**
-   * Gets a random OpenType feature
-   * @private
-   */
   getRandomFeature() {
     return this.features[Math.floor(Math.random() * this.features.length)];
   }
