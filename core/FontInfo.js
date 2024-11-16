@@ -4,6 +4,83 @@
 
 import { AXIS_NAMES } from './Types.js';
 
+export class FontInfoRenderer {
+  /**
+   * Renders font information into a specified container
+   * @param {HTMLElement} container - Container element to render into
+   * @param {Object} info - Font information object
+   */
+  static renderFontInfo(container, info) {
+    if (!container || !info) return;
+
+    container.innerHTML = `
+        <p><strong>Names</strong><br>
+        Font family &rarr; ${info.fontFamily}<br>
+        Full name &rarr; ${info.fullName}</p>
+
+        <p><strong>Font file</strong><br>
+        Filename &rarr; ${info.filename}<br>
+        File format &rarr; ${info.format}<br>
+        Units per Em &rarr; ${info.unitsPerEm}<br>
+        Glyph count &rarr; ${info.glyphCount}<br>
+        Monospaced &rarr; ${info.isFixedPitch}</p>
+
+        <p><strong>Version and dates</strong><br>
+        Version &rarr; ${info.version}<br>
+        Created &rarr; ${info.created}<br>
+        Modified &rarr; ${info.modified}</p>
+
+        <p><strong>Foundry</strong><br>
+        Manufacturer &rarr; ${info.manufacturer}<br>
+        Designer &rarr; ${info.designer}<br>
+        Vendor ID &rarr; ${info.vendorID}</p>
+
+        <p><strong>Copyright</strong><br>
+        ${info.copyright}</p>
+
+        ${info.axes.length ? `
+        <p><strong>Variable font axes</strong><br>
+        ${info.axes.map(axis =>
+            `${axis.name} (${axis.tag}) &rarr; ${axis.min} to ${axis.max}, default &rarr; ${axis.default}`
+            ).join('<br>')}</p>` : ''}
+    `;
+  }
+
+  /**
+   * Renders glyph information into a specified container
+   * @param {HTMLElement} container - Container element to render into
+   * @param {Object} font - OpenType.js font object
+   * @param {string} glyph - Current glyph character
+   */
+  static renderGlyphInfo(container, font, glyph) {
+    if (!container) return;
+
+    if (!font || !glyph) {
+      container.innerHTML = '<p>No glyph selected</p>';
+      return;
+    }
+
+    const glyphIndex = font.charToGlyphIndex(glyph);
+    const glyphObj = font.glyphs.get(glyphIndex);
+
+    container.innerHTML = `
+      <p><strong>Glyph Information</strong><br>
+      Character &rarr; ${glyph}<br>
+      Unicode &rarr; U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || 'N/A'}<br>
+      Name &rarr; ${glyphObj.name}<br>
+      Index &rarr; ${glyphIndex}<br>
+      Advance Width &rarr; ${glyphObj.advanceWidth}</p>
+      ${glyphObj.xMin !== undefined ? `
+      <p><strong>Bounds</strong><br>
+      xMin &rarr; ${glyphObj.xMin}<br>
+      xMax &rarr; ${glyphObj.xMax}<br>
+      yMin &rarr; ${glyphObj.yMin}<br>
+      yMax &rarr; ${glyphObj.yMax}</p>
+      ` : ''}
+    `;
+  }
+}
+
 /**
  * Extracts comprehensive information about a font
  * @param {Object} font - OpenType.js font object
@@ -44,11 +121,7 @@ export function getFontInformation(font, filename) {
   };
 }
 
-/**
- * Extracts OpenType feature information
- * @param {Object} font - OpenType.js font object
- * @returns {Array} Array of feature objects
- */
+// Helper functions remain the same
 function extractOpenTypeFeatures(font) {
   const features = [];
   if (font.tables.gsub) {
@@ -62,11 +135,6 @@ function extractOpenTypeFeatures(font) {
   return features;
 }
 
-/**
- * Extracts variable font axis information
- * @param {Object} font - OpenType.js font object
- * @returns {Array<AxisDefinition>} Array of axis definitions
- */
 function extractVariableAxes(font) {
   if (!font.tables.fvar) return [];
 

@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { FontLoader } from './core/FontLoader.js';
+import { FontInfoRenderer } from './core/FontInfo.js';
 import { GlyphAnimator } from './hyperflip/GlyphAnimator.js';
 import { MetricsOverlay } from './hyperflip/MetricsOverlay.js';
 import { VariationAxes } from './hyperflip/VariationAxes.js';
@@ -64,13 +65,15 @@ class FontViewer {
     }
 
     // Font info toggle
-    const infoToggle = document.getElementById('info-toggle');
-    if (infoToggle) {
-      infoToggle.addEventListener('click', () => {
-        const infoPanel = document.getElementById('font-info');
-        const isVisible = infoPanel.style.display !== 'none';
-        infoPanel.style.display = isVisible ? 'none' : 'block';
-        infoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
+    const fontInfoToggle = document.getElementById('font-info-toggle');
+    if (fontInfoToggle) {
+      fontInfoToggle.addEventListener('click', () => {
+        const fontInfo = document.getElementById('font-info');
+        if (!fontInfo) return;
+
+        const isVisible = fontInfo.style.display !== 'none';
+        fontInfo.style.display = isVisible ? 'none' : 'block';
+        fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
       });
     }
 
@@ -79,6 +82,8 @@ class FontViewer {
     if (glyphInfoToggle) {
       glyphInfoToggle.addEventListener('click', () => {
         const glyphInfo = document.getElementById('glyph-info');
+        if (!glyphInfo) return;
+
         const isVisible = glyphInfo.style.display !== 'none';
         glyphInfo.style.display = isVisible ? 'none' : 'block';
         glyphInfoToggle.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
@@ -98,12 +103,16 @@ class FontViewer {
     }
 
     // Metrics toggle
-    document.getElementById('metrics-toggle')
-      ?.addEventListener('click', () => this.metricsOverlay.toggle());
+    const metricsToggle = document.getElementById('metrics-toggle');
+    if (metricsToggle) {
+      metricsToggle.addEventListener('click', () => this.metricsOverlay.toggle());
+    }
 
     // Background toggle
-    document.getElementById('background-toggle')
-      ?.addEventListener('click', () => this.uiControls.toggleColorScheme());
+    const backgroundToggle = document.getElementById('background-toggle');
+    if (backgroundToggle) {
+      backgroundToggle.addEventListener('click', () => this.uiControls.toggleColorScheme());
+    }
 
     // Keyboard controls
     document.addEventListener('keydown', this.handleKeyPress.bind(this));
@@ -168,6 +177,10 @@ class FontViewer {
     const display = document.querySelector('.glyph-buffer');
     display.style.fontFamily = `"${fontFamily}"`;
 
+    // Update font info panel
+    const fontInfoContent = document.getElementById('font-info-content');
+    FontInfoRenderer.renderFontInfo(fontInfoContent, fontInfo);
+
     // Setup variable font axes
     if (fontInfo.axes?.length > 0) {
       this.variationAxes.createAxesControls(fontInfo.axes);
@@ -184,14 +197,18 @@ class FontViewer {
     }
   }
 
+  handleGlyphChange(glyph) {
+    // Update glyph info panel
+    const glyphInfoContent = document.getElementById('glyph-info-content');
+    FontInfoRenderer.renderGlyphInfo(glyphInfoContent, this.fontLoader.currentFont, glyph);
+
+    // Update metrics overlay if visible
+    this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
+  }
+
   handleError(error) {
     console.error('Font loading error:', error);
     alert(`Error loading font: ${error.message}`);
-  }
-
-  handleGlyphChange(glyph) {
-    // Update metrics overlay if visible
-    this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
   }
 
   handleAxesChange(settings) {
