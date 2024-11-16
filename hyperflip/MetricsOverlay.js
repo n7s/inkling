@@ -53,7 +53,7 @@ export class MetricsOverlay {
       { pos: metrics.baseline, label: 'Baseline' },
       { pos: metrics.baseline - metrics.baselineOffset, label: 'Ascender' },
       { pos: metrics.descender, label: 'Descender' },
-      { pos: metrics.capHeight, label: 'Cap height' },
+      { pos: metrics.capHeight, label: 'Capital height' },
       { pos: metrics.xHeight, label: 'x-height' }
     ];
 
