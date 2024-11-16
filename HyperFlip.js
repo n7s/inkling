@@ -53,9 +53,104 @@ class FontViewer {
     });
   }
 
+  setupEventListeners() {
+    // Fullscreen button
+    const fullscreenButton = document.querySelector('#fullScreen button');
+    if (fullscreenButton) {
+      fullscreenButton.addEventListener('click', () => {
+        this.uiControls.toggleFullscreen();
+        fullscreenButton.textContent = this.uiControls.isFullscreen ? 'Windowed' : 'Fullscreen';
+      });
+    }
+
+    // Font info toggle
+    const infoToggle = document.getElementById('info-toggle');
+    if (infoToggle) {
+      infoToggle.addEventListener('click', () => {
+        const infoPanel = document.getElementById('font-info');
+        const isVisible = infoPanel.style.display !== 'none';
+        infoPanel.style.display = isVisible ? 'none' : 'block';
+        infoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
+      });
+    }
+
+    // Glyph info toggle
+    const glyphInfoToggle = document.getElementById('glyph-info-toggle');
+    if (glyphInfoToggle) {
+      glyphInfoToggle.addEventListener('click', () => {
+        const glyphInfo = document.getElementById('glyph-info');
+        const isVisible = glyphInfo.style.display !== 'none';
+        glyphInfo.style.display = isVisible ? 'none' : 'block';
+        glyphInfoToggle.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
+      });
+    }
+
+    // Randomize button
+    const randomizeButton = document.getElementById('randomize-button');
+    if (randomizeButton) {
+      randomizeButton.addEventListener('click', () => {
+        if (this.glyphAnimator) {
+          this.glyphAnimator.toggleOrder();
+          randomizeButton.textContent = this.glyphAnimator.isRandomOrder ?
+            'Sequential glyph order' : 'Randomize glyph order';
+        }
+      });
+    }
+
+    // Metrics toggle
+    document.getElementById('metrics-toggle')
+      ?.addEventListener('click', () => this.metricsOverlay.toggle());
+
+    // Background toggle
+    document.getElementById('background-toggle')
+      ?.addEventListener('click', () => this.uiControls.toggleColorScheme());
+
+    // Keyboard controls
+    document.addEventListener('keydown', this.handleKeyPress.bind(this));
+
+    // Slider controls
+    this.setupSliderControls();
+  }
+
+  setupSliderControls() {
+    // Font size slider
+    const fontSizeSlider = document.getElementById('font-size');
+    if (fontSizeSlider) {
+      fontSizeSlider.addEventListener('input', (e) => {
+        const newSize = e.target.value;
+        this.glyphAnimator.displayElement.style.fontSize = `${newSize}px`;
+        e.target.nextElementSibling.textContent = `${newSize}px`;
+      });
+    }
+
+    // Animation delay slider
+    const speedSlider = document.getElementById('animation-delay');
+    if (speedSlider) {
+      speedSlider.addEventListener('input', (e) => {
+        const newInterval = parseInt(e.target.value);
+        e.target.nextElementSibling.textContent = `${newInterval}ms`;
+
+        if (this.glyphAnimator.isAnimating) {
+          this.glyphAnimator.stop();
+          this.glyphAnimator.start(newInterval);
+        }
+      });
+    }
+
+    // Vertical position slider
+    const verticalPositionSlider = document.getElementById('vertical-position');
+    if (verticalPositionSlider) {
+      verticalPositionSlider.addEventListener('input', (e) => {
+        const reversedPosition = e.target.max - e.target.value;
+        this.glyphAnimator.displayElement.style.top = `${reversedPosition - 50}%`;
+        e.target.nextElementSibling.textContent = `${reversedPosition}%`;
+      });
+    }
+  }
+
   async handleFontDrop(buffer, filename) {
     try {
-      // Double-check that drop text is removed
+      // Remove the drop text
       const dropText = document.getElementById('drop-text');
       if (dropText && dropText.parentNode) {
         dropText.parentNode.removeChild(dropText);
@@ -68,37 +163,7 @@ class FontViewer {
     }
   }
 
-  setupEventListeners() {
-    // Add fullscreen button listener
-    const fullscreenButton = document.querySelector('#fullScreen button');
-    if (fullscreenButton) {
-      fullscreenButton.addEventListener('click', () => {
-        this.uiControls.toggleFullscreen();
-        fullscreenButton.textContent = this.uiControls.isFullscreen ? 'Windowed' : 'Fullscreen';
-      });
-    }
-
-    // Add keyboard controls
-    document.addEventListener('keydown', this.handleKeyPress.bind(this));
-
-    // Add other UI control listeners
-    document.getElementById('metrics-toggle')
-      ?.addEventListener('click', () => this.metricsOverlay.toggle());
-
-    document.getElementById('background-toggle')
-      ?.addEventListener('click', () => this.uiControls.toggleColorScheme());
-  }
-
-  async handleFontDrop(buffer, filename) {
-    try {
-      const { font, fontInfo, fontFamily } = await this.fontLoader.loadFont(buffer, filename);
-      this.handleFontLoaded({ font, fontInfo, fontFamily });
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async handleFontLoaded({ font, fontInfo, fontFamily }) {
+  handleFontLoaded({ font, fontInfo, fontFamily }) {
     // Update display settings
     const display = document.querySelector('.glyph-buffer');
     display.style.fontFamily = `"${fontFamily}"`;
@@ -110,8 +175,10 @@ class FontViewer {
 
     // Start glyph animation with the correct font
     try {
-      await this.glyphAnimator.setGlyphsFromFont(font);
-      this.glyphAnimator.start(100);
+      this.glyphAnimator.setGlyphsFromFont(font)
+        .then(() => {
+          this.glyphAnimator.start(100);
+        });
     } catch (error) {
       this.handleError(error);
     }
@@ -123,6 +190,7 @@ class FontViewer {
   }
 
   handleGlyphChange(glyph) {
+    // Update metrics overlay if visible
     this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
   }
 
@@ -136,10 +204,30 @@ class FontViewer {
         event.preventDefault();
         this.glyphAnimator.isAnimating ?
           this.glyphAnimator.stop() :
-          this.glyphAnimator.start(100);
+          this.glyphAnimator.start(parseInt(document.getElementById('animation-delay')?.value || 100));
         break;
       case 'f':
         this.uiControls.toggleFullscreen();
+        break;
+      case 'ArrowLeft':
+      case 'h':
+        this.glyphAnimator.stop();
+        this.glyphAnimator.moveBack(10);
+        break;
+      case 'j':
+      case 'ArrowDown':
+        this.glyphAnimator.stop();
+        this.glyphAnimator.moveBack(1);
+        break;
+      case 'ArrowRight':
+      case 'l':
+        this.glyphAnimator.stop();
+        this.glyphAnimator.moveForward(10);
+        break;
+      case 'k':
+      case 'ArrowUp':
+        this.glyphAnimator.stop();
+        this.glyphAnimator.moveForward(1);
         break;
     }
   }
