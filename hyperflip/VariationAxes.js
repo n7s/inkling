@@ -3,16 +3,15 @@
 // =============================================================================
 
 export class VariationAxes {
-  /**
-   * Creates a new VariationAxes instance
-   * @param {Object} options - Configuration options
-   * @param {HTMLElement} options.container - Container for axis controls
-   * @param {Function} options.onChange - Callback when axes change
-   */
   constructor(options) {
     this.container = options.container;
     this.onChange = options.onChange;
     this.currentSettings = {};
+
+    // Create a specific container for axis controls
+    this.axisContainer = document.createElement('div');
+    this.axisContainer.className = 'axis-controls';
+    this.container.appendChild(this.axisContainer);
   }
 
   /**
@@ -20,7 +19,8 @@ export class VariationAxes {
    * @param {Array<AxisDefinition>} axes - Array of axis definitions
    */
   createAxesControls(axes) {
-    this.container.innerHTML = '';
+    // Clear only the axis container, not the entire controls div
+    this.axisContainer.innerHTML = '';
     this.currentSettings = {};
 
     axes.forEach(axis => {
@@ -49,7 +49,7 @@ export class VariationAxes {
       container.appendChild(label);
       container.appendChild(slider);
       container.appendChild(value);
-      this.container.appendChild(container);
+      this.axisContainer.appendChild(container);
     });
   }
 

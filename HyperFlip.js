@@ -37,12 +37,35 @@ class FontViewer {
       onChange: this.handleAxesChange.bind(this)
     });
 
+    // Make sure these are after the VariationAxes initialization
+    const controls = document.getElementById('controls');
+    const buttonsContainer = controls.querySelector('.buttons-container');
+    if (!buttonsContainer) {
+      console.error('Buttons container not found!');
+    }
+
     this.uiControls = new UIControls();
 
+    // Note: We're now using document.body as the dropZone
     this.dragAndDrop = new DragAndDrop({
       dropZone: document.body,
       onDrop: this.handleFontDrop.bind(this)
     });
+  }
+
+  async handleFontDrop(buffer, filename) {
+    try {
+      // Double-check that drop text is removed
+      const dropText = document.getElementById('drop-text');
+      if (dropText && dropText.parentNode) {
+        dropText.parentNode.removeChild(dropText);
+      }
+
+      const { font, fontInfo, fontFamily } = await this.fontLoader.loadFont(buffer, filename);
+      this.handleFontLoaded({ font, fontInfo, fontFamily });
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   setupEventListeners() {

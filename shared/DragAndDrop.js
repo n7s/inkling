@@ -3,22 +3,12 @@
 // =============================================================================
 
 export class DragAndDrop {
-  /**
-   * Creates a new DragAndDrop instance
-   * @param {Object} options - Configuration options
-   * @param {HTMLElement} options.dropZone - Drop zone element
-   * @param {Function} options.onDrop - Callback when file is dropped
-   */
   constructor(options) {
     this.dropZone = options.dropZone;
     this.onDrop = options.onDrop;
     this.setupEventListeners();
   }
 
-  /**
-   * Sets up drag and drop event listeners
-   * @private
-   */
   setupEventListeners() {
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       this.dropZone.addEventListener(eventName, this.preventDefaults, false);
@@ -36,35 +26,19 @@ export class DragAndDrop {
     this.dropZone.addEventListener('drop', this.handleDrop.bind(this), false);
   }
 
-  /**
-   * Prevents default drag and drop behaviors
-   * @private
-   */
   preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
   }
 
-  /**
-   * Highlights drop zone
-   * @private
-   */
   highlight() {
     this.dropZone.classList.add('dragover');
   }
 
-  /**
-   * Removes drop zone highlight
-   * @private
-   */
   unhighlight() {
     this.dropZone.classList.remove('dragover');
   }
 
-  /**
-   * Handles file drop event
-   * @private
-   */
   handleDrop(e) {
     const file = e.dataTransfer.files[0];
     if (!this.validateFontFile(file)) {
@@ -72,21 +46,19 @@ export class DragAndDrop {
       return;
     }
 
+    // Remove drop text immediately when a valid file is dropped
+    const dropText = document.getElementById('drop-text');
+    if (dropText) {
+      dropText.parentNode.removeChild(dropText);
+    }
+
     this.readFile(file);
   }
 
-  /**
-   * Validates font file type
-   * @private
-   */
   validateFontFile(file) {
     return file && file.name.match(/\.(ttf|otf)$/i);
   }
 
-  /**
-   * Reads dropped file
-   * @private
-   */
   async readFile(file) {
     try {
       const buffer = await file.arrayBuffer();
