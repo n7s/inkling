@@ -29,8 +29,14 @@ export class MetricsOverlay {
     const containerCenter = glyphRect.left + (glyphRect.width / 2);
     const advanceScale = glyphRect.width / glyph.advanceWidth;
 
-    // Calculate baseline position
-    const baseline = glyphRect.top + (font.tables.os2.sTypoAscender * metricsScale);
+    // Get vertical position from slider (0-100)
+    const verticalPositionSlider = document.getElementById('vertical-position');
+    const verticalPosition = verticalPositionSlider ?
+      parseInt(verticalPositionSlider.value) / 100 : 0.5;
+
+    // Calculate baseline position with the cap height offset correction
+    const capHeightOffset = (font.tables.os2.sCapHeight * metricsScale) / 2;
+    const baseline = glyphRect.top + (glyphRect.height * verticalPosition) + capHeightOffset;
 
     return {
       glyph,
@@ -39,11 +45,11 @@ export class MetricsOverlay {
       glyphRect,
       containerCenter,
       advanceScale,
-      baselineOffset: font.tables.os2.sTypoAscender * metricsScale,
-      baseline: baseline,
-      descender: baseline - (font.tables.os2.sTypoDescender * metricsScale),
+      baseline,
+      // Calculate all other metrics normally relative to the corrected baseline
+      ascender: baseline - (font.tables.os2.sTypoAscender * metricsScale),
+      descender: baseline + (Math.abs(font.tables.os2.sTypoDescender) * metricsScale),
       capHeight: baseline - (font.tables.os2.sCapHeight * metricsScale),
-      // Add x-height calculation
       xHeight: baseline - (font.tables.os2.sxHeight * metricsScale)
     };
   }
@@ -51,7 +57,7 @@ export class MetricsOverlay {
   renderMetricLines(metrics) {
     const lines = [
       { pos: metrics.baseline, label: 'Baseline' },
-      { pos: metrics.baseline - metrics.baselineOffset, label: 'Ascender' },
+      { pos: metrics.ascender, label: 'Ascender' },
       { pos: metrics.descender, label: 'Descender' },
       { pos: metrics.capHeight, label: 'Capital height' },
       { pos: metrics.xHeight, label: 'x-height' }
