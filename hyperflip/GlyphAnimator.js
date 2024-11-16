@@ -3,46 +3,47 @@
 // =============================================================================
 
 export class GlyphAnimator {
-  /**
-   * Creates a new GlyphAnimator instance
-   * @param {Object} options - Configuration options
-   * @param {HTMLElement} options.displayElement - Element to show glyphs
-   * @param {Function} options.onGlyphChange - Callback when glyph changes
-   */
   constructor(options) {
     this.displayElement = options.displayElement;
     this.onGlyphChange = options.onGlyphChange;
     this.glyphs = [];
+    this.sequentialGlyphs = [];
     this.currentIndex = 0;
     this.isAnimating = false;
     this.animationInterval = null;
     this.isRandomOrder = false;
   }
 
-  /**
-   * Sets the glyphs to animate
-   * @param {string[]} glyphs - Array of glyphs
-   */
-  setGlyphs(glyphs) {
-    this.glyphs = [...glyphs];
-    this.sequentialGlyphs = [...glyphs];
+  async setGlyphsFromFont(font) {
+    if (!font) {
+      throw new Error('No font provided');
+    }
+
+    const chars = [];
+    for (let i = 0; i < font.glyphs.length; i++) {
+      const glyph = font.glyphs.get(i);
+      if (glyph.name === '.notdef' || glyph.unicode === undefined) {
+        continue;
+      }
+      const char = String.fromCodePoint(glyph.unicode);
+      chars.push(char);
+    }
+
+    this.glyphs = chars;
+    this.sequentialGlyphs = [...chars];
     this.currentIndex = 0;
   }
 
-  /**
-   * Starts the animation
-   * @param {number} interval - Animation interval in milliseconds
-   */
   start(interval) {
-    if (this.glyphs.length === 0) return;
+    if (this.glyphs.length === 0) {
+      console.error('No glyphs available for animation');
+      return;
+    }
 
     this.isAnimating = true;
     this.animate(interval);
   }
 
-  /**
-   * Stops the animation
-   */
   stop() {
     this.isAnimating = false;
     if (this.animationInterval) {
@@ -50,23 +51,6 @@ export class GlyphAnimator {
     }
   }
 
-  /**
-   * Toggles between random and sequential order
-   */
-  toggleOrder() {
-    if (this.isRandomOrder) {
-      this.glyphs = [...this.sequentialGlyphs];
-    } else {
-      this.glyphs = this.shuffleArray([...this.glyphs]);
-    }
-    this.isRandomOrder = !this.isRandomOrder;
-    this.currentIndex = 0;
-  }
-
-  /**
-   * Internal animation function
-   * @private
-   */
   animate(interval) {
     const nextFrame = () => {
       if (!this.isAnimating) return;
@@ -82,10 +66,16 @@ export class GlyphAnimator {
     nextFrame();
   }
 
-  /**
-   * Shuffles an array
-   * @private
-   */
+  toggleOrder() {
+    if (this.isRandomOrder) {
+      this.glyphs = [...this.sequentialGlyphs];
+    } else {
+      this.glyphs = this.shuffleArray([...this.glyphs]);
+    }
+    this.isRandomOrder = !this.isRandomOrder;
+    this.currentIndex = 0;
+  }
+
   shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

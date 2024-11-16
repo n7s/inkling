@@ -46,10 +46,8 @@ class FontViewer {
   }
 
   setupEventListeners() {
-    // Add keyboard controls
     document.addEventListener('keydown', this.handleKeyPress.bind(this));
 
-    // Add UI control listeners
     document.getElementById('metrics-toggle')
       ?.addEventListener('click', () => this.metricsOverlay.toggle());
 
@@ -66,19 +64,23 @@ class FontViewer {
     }
   }
 
-  handleFontLoaded({ font, fontInfo, fontFamily }) {
+  async handleFontLoaded({ font, fontInfo, fontFamily }) {
     // Update display settings
     const display = document.querySelector('.glyph-buffer');
-    display.style.fontFamily = fontFamily;
+    display.style.fontFamily = `"${fontFamily}"`;
 
     // Setup variable font axes
-    if (fontInfo.axes.length > 0) {
+    if (fontInfo.axes?.length > 0) {
       this.variationAxes.createAxesControls(fontInfo.axes);
     }
 
-    // Start glyph animation
-    this.glyphAnimator.setGlyphs(font.glyphs);
-    this.glyphAnimator.start(100);
+    // Start glyph animation with the correct font
+    try {
+      await this.glyphAnimator.setGlyphsFromFont(font);
+      this.glyphAnimator.start(100);
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   handleError(error) {
@@ -87,7 +89,6 @@ class FontViewer {
   }
 
   handleGlyphChange(glyph) {
-    // Update metrics overlay if visible
     this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
   }
 
@@ -96,7 +97,6 @@ class FontViewer {
   }
 
   handleKeyPress(event) {
-    // Add keyboard shortcuts
     switch(event.key) {
       case ' ':
         event.preventDefault();
@@ -115,3 +115,5 @@ class FontViewer {
 document.addEventListener('DOMContentLoaded', () => {
   new FontViewer();
 });
+
+export default FontViewer;
