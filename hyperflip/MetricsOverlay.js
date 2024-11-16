@@ -41,8 +41,10 @@ export class MetricsOverlay {
       advanceScale,
       baselineOffset: font.tables.os2.sTypoAscender * metricsScale,
       baseline: baseline,
-      // Key change: Descender should be ADDED to baseline because sTypoDescender is negative
-      descender: baseline - (font.tables.os2.sTypoDescender * metricsScale)
+      descender: baseline - (font.tables.os2.sTypoDescender * metricsScale),
+      capHeight: baseline - (font.tables.os2.sCapHeight * metricsScale),
+      // Add x-height calculation
+      xHeight: baseline - (font.tables.os2.sxHeight * metricsScale)
     };
   }
 
@@ -50,7 +52,9 @@ export class MetricsOverlay {
     const lines = [
       { pos: metrics.baseline, label: 'Baseline' },
       { pos: metrics.baseline - metrics.baselineOffset, label: 'Ascender' },
-      { pos: metrics.descender, label: 'Descender' }
+      { pos: metrics.descender, label: 'Descender' },
+      { pos: metrics.capHeight, label: 'Cap height' },
+      { pos: metrics.xHeight, label: 'x-height' }
     ];
 
     lines.forEach(({ pos, label }) => {
