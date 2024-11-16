@@ -1,47 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordMaster BX90000 Excelsior</title>
-
     <!-- Import the OpenType.js library first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
-
     <!-- Import our modular JavaScript as a module -->
-    <script type="module" src="./wordmaster/WordAnimator.js"></script>
-
+    <script type="module" src="./wordmaster/WordMaster.js"></script>
     <!-- Original CSS remains the same -->
     <link rel="stylesheet" href="styles.css">
-  </head>
+</head>
 <body>
     <div id="fullScreen">
-        <button id="fullscreenButton" onClick="fullscreenToggle()"><span>Fullscreen</span></button>
+        <button>Fullscreen</button>
     </div>
 
-    <div id="dropZone">
-        <div id="initialMessage">Drop your TTF or OTF font here</div>
+    <div id="drop-text">
+        Drop your TTF or OTF font here
     </div>
 
-    <div id="word">
-        <span></span>
+    <div class="display-container">
+        <div id="word"></div>
+        <div id="glyph-display" class="glyph-buffer"></div>
     </div>
 
-    <div id="glyph-display" class="glyph-buffer"></div>
+    <div id="font-info" style="display: none;">
+        <div id="font-info-content"></div>
+    </div>
+
     <div id="font-metrics-overlay"></div>
 
     <div id="feature-info"></div>
 
-    <div id="currentSettings"></div>
-
-    <div id="font-info">
-        <div id="font-info-content"></div>
-    </div>
-
     <div id="controls">
-        <div class="buttons-container" id="left">
-            <button id="info-toggle">Show font info</button>
-            <button id="features-toggle">Show features</button>
+        <div id="left" class="buttons-container">
+            <button id="font-info-toggle">Show font info</button>
+            <button id="font-opentype-features">Show features</button>
+            <button id="metrics-toggle">Show metrics</button>
             <button id="background-toggle">Swap colours</button>
         </div>
         <div id="axis-sliders"></div>

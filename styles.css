@@ -52,7 +52,7 @@ p > semibold {
 #metrics-toggle,
 #background-toggle,
 #randomize-button,
-#features-toggle {
+#font-opentype-features {
   font-size: 0.7rem;
   cursor: pointer;
   font-style: roman;
