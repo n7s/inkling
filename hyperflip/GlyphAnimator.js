@@ -10,8 +10,12 @@ export class GlyphAnimator {
     this.sequentialGlyphs = [];
     this.currentIndex = 0;
     this.isAnimating = false;
-    this.animationInterval = null;
+    this.animationFrameId = null;
     this.isRandomOrder = false;
+
+    // Animation timing variables
+    this.lastFrameTime = 0;
+    this.interval = 100; // Default interval
   }
 
   async setGlyphsFromFont(font) {
@@ -40,30 +44,53 @@ export class GlyphAnimator {
       return;
     }
 
+    this.interval = interval;
     this.isAnimating = true;
-    this.animate(interval);
+    this.lastFrameTime = performance.now();
+    this.animate();
   }
 
   stop() {
     this.isAnimating = false;
-    if (this.animationInterval) {
-      clearTimeout(this.animationInterval);
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
   }
 
-  animate(interval) {
-    const nextFrame = () => {
-      if (!this.isAnimating) return;
+  animate(currentTime = performance.now()) {
+    if (!this.isAnimating) return;
 
+    const elapsed = currentTime - this.lastFrameTime;
+
+    if (elapsed >= this.interval) {
+      // Update the glyph
       const currentChar = this.glyphs[this.currentIndex];
       this.displayElement.textContent = currentChar;
       this.onGlyphChange?.(currentChar);
 
+      // Move to next glyph
       this.currentIndex = (this.currentIndex + 1) % this.glyphs.length;
-      this.animationInterval = setTimeout(() => nextFrame(), interval);
-    };
 
-    nextFrame();
+      // Reset timer
+      this.lastFrameTime = currentTime - (elapsed % this.interval);
+    }
+
+    this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+  }
+
+  moveForward(steps = 1) {
+    this.currentIndex = (this.currentIndex + steps) % this.glyphs.length;
+    const currentChar = this.glyphs[this.currentIndex];
+    this.displayElement.textContent = currentChar;
+    this.onGlyphChange?.(currentChar);
+  }
+
+  moveBack(steps = 1) {
+    this.currentIndex = (this.currentIndex - steps + this.glyphs.length) % this.glyphs.length;
+    const currentChar = this.glyphs[this.currentIndex];
+    this.displayElement.textContent = currentChar;
+    this.onGlyphChange?.(currentChar);
   }
 
   toggleOrder() {
