@@ -2,13 +2,13 @@
 // HyperFlip.js
 // =============================================================================
 
-import { FontLoader } from './core/FontLoader.js';
-import { FontInfoRenderer } from './core/FontInfo.js';
-import { GlyphAnimator } from './hyperflip/GlyphAnimator.js';
-import { MetricsOverlay } from './hyperflip/MetricsOverlay.js';
-import { VariationAxes } from './hyperflip/VariationAxes.js';
-import { UIControls } from './shared/UIControls.js';
-import { DragAndDrop } from './shared/DragAndDrop.js';
+import { FontLoader } from '../core/FontLoader.js';
+import { FontInfoRenderer } from '../core/FontInfo.js';
+import { GlyphAnimator } from './GlyphAnimator.js';
+import { MetricsOverlay } from './MetricsOverlay.js';
+import { VariationAxes } from './VariationAxes.js';
+import { UIControls } from '../shared/UIControls.js';
+import { DragAndDrop } from '../shared/DragAndDrop.js';
 
 class FontViewer {
   constructor() {
