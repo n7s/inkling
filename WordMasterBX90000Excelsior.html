@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordMaster BX90000 Excelsior</title>
+
+    <!-- Import the OpenType.js library first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+
+    <!-- Import our modular JavaScript as a module -->
+    <script type="module" src="./wordmaster/WordAnimator.js"></script>
+
+    <!-- Original CSS remains the same -->
     <link rel="stylesheet" href="styles.css">
-</head>
+  </head>
 <body>
     <div id="fullScreen">
         <button id="fullscreenButton" onClick="fullscreenToggle()"><span>Fullscreen</span></button>
@@ -37,7 +46,5 @@
         </div>
         <div id="axis-sliders"></div>
     </div>
-    <script src="BX90000.js"></script>
-    <script src="WordMaster.js"></script>
 </body>
 </html>
