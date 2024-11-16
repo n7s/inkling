@@ -149,6 +149,10 @@ p > semibold {
   color: var(--black);
 }
 
+#glyph-info-content > p {
+  margin-top: 0px;
+}
+
 #controls {
   position: fixed;
   bottom: 0px;
