@@ -3,20 +3,11 @@
 // =============================================================================
 
 export class MetricsOverlay {
-  /**
-   * Creates a new MetricsOverlay instance
-   * @param {HTMLElement} overlayElement - Element to render metrics
-   */
   constructor(overlayElement) {
     this.overlay = overlayElement;
     this.isVisible = false;
   }
 
-  /**
-   * Renders font metrics visualization
-   * @param {Object} font - OpenType.js font object
-   * @param {HTMLElement} glyphElement - Element containing the glyph
-   */
   render(font, glyphElement) {
     if (!this.isVisible) return;
 
@@ -28,10 +19,6 @@ export class MetricsOverlay {
     this.renderBearingLines(metrics);
   }
 
-  /**
-   * Calculates metrics for current glyph
-   * @private
-   */
   calculateMetrics(font, glyphElement, currentChar) {
     const glyphIndex = font.charToGlyphIndex(currentChar);
     const glyph = font.glyphs.get(glyphIndex);
@@ -42,6 +29,9 @@ export class MetricsOverlay {
     const containerCenter = glyphRect.left + (glyphRect.width / 2);
     const advanceScale = glyphRect.width / glyph.advanceWidth;
 
+    // Calculate baseline position
+    const baseline = glyphRect.top + (font.tables.os2.sTypoAscender * metricsScale);
+
     return {
       glyph,
       fontSize,
@@ -50,20 +40,17 @@ export class MetricsOverlay {
       containerCenter,
       advanceScale,
       baselineOffset: font.tables.os2.sTypoAscender * metricsScale,
-      baseline: glyphRect.top + (font.tables.os2.sTypoAscender * metricsScale)
+      baseline: baseline,
+      // Key change: Descender should be ADDED to baseline because sTypoDescender is negative
+      descender: baseline - (font.tables.os2.sTypoDescender * metricsScale)
     };
   }
 
-  /**
-   * Renders horizontal metric lines
-   * @private
-   */
   renderMetricLines(metrics) {
     const lines = [
       { pos: metrics.baseline, label: 'Baseline' },
       { pos: metrics.baseline - metrics.baselineOffset, label: 'Ascender' },
-      { pos: metrics.baseline + -metrics.glyph.descent, label: 'Descender' },
-      // Add more metric lines as needed
+      { pos: metrics.descender, label: 'Descender' }
     ];
 
     lines.forEach(({ pos, label }) => {
@@ -81,10 +68,6 @@ export class MetricsOverlay {
     });
   }
 
-  /**
-   * Renders vertical bearing lines
-   * @private
-   */
   renderBearingLines(metrics) {
     const scaledAdvanceWidth = metrics.glyph.advanceWidth * metrics.advanceScale;
     const leftPos = metrics.containerCenter - (scaledAdvanceWidth / 2);
@@ -98,9 +81,6 @@ export class MetricsOverlay {
     });
   }
 
-  /**
-   * Toggles metrics visibility
-   */
   toggle() {
     this.isVisible = !this.isVisible;
     this.overlay.style.display = this.isVisible ? 'block' : 'none';
