@@ -9,6 +9,7 @@ import { VariationAxes } from '../hyperflip/VariationAxes.js';
 import { UIControls } from '../shared/UIControls.js';
 import { DragAndDrop } from '../shared/DragAndDrop.js';
 import { TextFitter } from './TextFitter.js';
+import { OpenTypeFeatures } from './OpenTypeFeatures.js';
 
 class WordAnimator {
   constructor(options) {
@@ -19,16 +20,15 @@ class WordAnimator {
       this.container.style.position = 'relative';
     }
     this.wordList = [];
-    this.processedWordList = [];  // New array to store words with case variations
-    this.features = options?.features || [];
+    this.processedWordList = [];
     this.animationTimer = null;
     this.fadeTimer = null;
-    this.currentFeature = null;
     this.currentVariationSettings = 'normal';
     this.paddingPercentage = 10;
     this.animationDelay = 3000;
     this.isAnimating = false;
 
+    this.openTypeFeatures = new OpenTypeFeatures();
     this.uiControls = new UIControls();
 
     this.fontLoader = new FontLoader({
@@ -117,10 +117,7 @@ class WordAnimator {
         delayValue.textContent = newDelay + 'ms';
       }
 
-      // Clear any pending timeout
       clearTimeout(delayTimeout);
-
-      // Set a new timeout to update animation after slider stops moving
       delayTimeout = setTimeout(() => {
         this.updateAnimationDelay(newDelay);
       }, 200);
@@ -154,29 +151,6 @@ class WordAnimator {
       fontInfo.style.display = isVisible ? 'none' : 'block';
       if (fontInfoToggle) {
         fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
-      }
-    });
-
-    // OpenType features toggle
-    const featureToggle = document.getElementById('font-opentype-features');
-    const featureInfo = document.getElementById('feature-info');
-    featureToggle?.addEventListener('click', () => {
-      if (!featureInfo) return;
-      const isVisible = getComputedStyle(featureInfo).display !== 'none';
-      featureInfo.style.display = isVisible ? 'none' : 'block';
-      if (featureToggle) {
-        featureToggle.textContent = isVisible ? 'Show features' : 'Hide features';
-      }
-    });
-
-    // Metrics toggle
-    const metricsToggle = document.getElementById('metrics-toggle');
-    const metricsOverlay = document.getElementById('font-metrics-overlay');
-    metricsToggle?.addEventListener('click', () => {
-      this.metricsOverlay.toggle();
-      if (metricsToggle && metricsOverlay) {
-        const isVisible = getComputedStyle(metricsOverlay).display !== 'none';
-        metricsToggle.textContent = isVisible ? 'Hide metrics' : 'Show metrics';
       }
     });
 
@@ -225,16 +199,15 @@ class WordAnimator {
 
   processWordList() {
     this.processedWordList = this.wordList.map(word => {
-      // Only modify words that are completely lowercase
       if (word === word.toLowerCase()) {
         const random = Math.random();
-        if (random < 0.05) {  // 5% chance for ALL CAPS
+        if (random < 0.05) {
           return word.toUpperCase();
-        } else if (random < 0.15) {  // Additional 10% chance for Capitalized
+        } else if (random < 0.15) {
           return word.charAt(0).toUpperCase() + word.slice(1);
         }
       }
-      return word;  // Keep original case for all other words
+      return word;
     });
   }
 
@@ -245,6 +218,11 @@ class WordAnimator {
     );
 
     this.container.style.fontFamily = `"${fontFamily}"`;
+
+    // Extract and set up OpenType features
+    this.openTypeFeatures.clear();
+    this.openTypeFeatures.extractFeatures(fontInfo);
+    this.openTypeFeatures.createButtons();
 
     // Create axis controls if font has variable axes
     if (fontInfo.axes) {
@@ -288,9 +266,7 @@ class WordAnimator {
   updateWord() {
     if (this.wordList.length === 0 || !this.isAnimating) return;
 
-    // Clear any existing fade timer
     clearTimeout(this.fadeTimer);
-
     this.container.classList.add('fade-out');
 
     this.fadeTimer = setTimeout(() => {
@@ -301,12 +277,8 @@ class WordAnimator {
       wordElement.textContent = word;
       wordElement.style.whiteSpace = 'nowrap';
 
-      if (this.features.length > 0) {
-        const feature = this.getRandomFeature();
-        wordElement.style.fontFeatureSettings = `"${feature}" 1`;
-        this.currentFeature = feature;
-      }
-
+      // Apply active OpenType features
+      wordElement.style.fontFeatureSettings = this.openTypeFeatures.getFeatureString();
       wordElement.style.fontVariationSettings = this.currentVariationSettings;
 
       this.container.innerHTML = '';
@@ -320,10 +292,6 @@ class WordAnimator {
 
   getRandomWord() {
     return this.processedWordList[Math.floor(Math.random() * this.processedWordList.length)];
-  }
-
-  getRandomFeature() {
-    return this.features[Math.floor(Math.random() * this.features.length)];
   }
 }
 
