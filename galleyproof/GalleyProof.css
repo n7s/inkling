@@ -1,0 +1,16 @@
+#galley {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#galley::-webkit-scrollbar {
+  display: none;
+}
+
+#galley > div {
+  white-space: pre-wrap;
+  margin: 0 auto;
+  width: 60%;
+  font-size: 1rem;
+  line-height: 1.5;
+}
