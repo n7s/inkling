@@ -3,55 +3,45 @@
 // =============================================================================
 
 export class TextFitter {
-  /**
-   * Creates a new TextFitter instance
-   * @param {Object} options - Configuration options
-   * @param {number} options.padding - Padding to maintain from container edges
-   */
-  constructor(options = {}) {
-    this.padding = options.padding || 40;
+  constructor({ paddingPercentage = 10 } = {}) {
+    this.paddingPercentage = paddingPercentage;
   }
 
-  /**
-   * Fits text element to container width
-   * @param {HTMLElement} element - Text element to fit
-   * @param {HTMLElement} container - Container element
-   */
   fitText(element, container) {
-    const containerWidth = container.offsetWidth - this.padding;
-    const measureDiv = this.createMeasureDiv(element);
+    if (!element || !container) return;
 
-    const fontSize = this.calculateFontSize(measureDiv, containerWidth);
-    element.style.fontSize = `${fontSize}px`;
+    // Store current font settings
+    const currentFontFamily = element.style.fontFamily;
+    const currentFeatureSettings = element.style.fontFeatureSettings;
+    const currentVariationSettings = element.style.fontVariationSettings;
 
-    document.body.removeChild(measureDiv);
-  }
+    // Reset everything
+    element.style.cssText = '';
 
-  /**
-   * Creates temporary div for measurement
-   * @private
-   */
-  createMeasureDiv(element) {
-    const measureDiv = document.createElement('div');
-    measureDiv.style.visibility = 'hidden';
-    measureDiv.style.position = 'absolute';
-    measureDiv.style.fontFamily = element.style.fontFamily;
-    measureDiv.style.fontFeatureSettings = element.style.fontFeatureSettings;
-    measureDiv.style.fontVariationSettings = element.style.fontVariationSettings;
-    measureDiv.style.whiteSpace = 'nowrap';
-    measureDiv.textContent = element.textContent;
-    document.body.appendChild(measureDiv);
-    return measureDiv;
-  }
+    // Restore font settings
+    if (currentFontFamily) element.style.fontFamily = currentFontFamily;
+    if (currentFeatureSettings) element.style.fontFeatureSettings = currentFeatureSettings;
+    if (currentVariationSettings) element.style.fontVariationSettings = currentVariationSettings;
 
-  /**
-   * Calculates optimal font size
-   * @private
-   */
-  calculateFontSize(measureDiv, targetWidth) {
-    const initialFontSize = 100;
-    measureDiv.style.fontSize = `${initialFontSize}px`;
-    const scale = targetWidth / measureDiv.offsetWidth;
-    return Math.floor(initialFontSize * scale);
+    // Set the base styles
+    element.style.position = 'absolute';
+    element.style.whiteSpace = 'nowrap';
+    element.style.fontSize = '200px';  // Start bigger
+    element.style.left = '50%';
+    element.style.top = '50%';
+
+    // Calculate available width with padding
+    const containerWidth = container.offsetWidth;
+    const paddingPixels = (containerWidth * this.paddingPercentage) / 100;
+    const availableWidth = containerWidth - (paddingPixels * 2);
+
+    // Get natural width at our base font size
+    const naturalWidth = element.offsetWidth;
+
+    // Calculate scale
+    const scale = availableWidth / naturalWidth;
+
+    // Apply transform
+    element.style.transform = `translate(-50%, -50%) scale(${scale})`;
   }
 }

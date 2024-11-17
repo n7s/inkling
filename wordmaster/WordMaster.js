@@ -10,15 +10,21 @@ import { UIControls } from '../shared/UIControls.js';
 import { DragAndDrop } from '../shared/DragAndDrop.js';
 import { TextFitter } from './TextFitter.js';
 
-export class WordAnimator {
+class WordAnimator {
   constructor(options) {
     this.container = document.getElementById('word');
+    // Set container to full size of parent
+    if (this.container) {
+      this.container.style.width = '100%';
+      this.container.style.height = '100%';
+      this.container.style.position = 'relative';
+    }
     this.wordList = [];
     this.features = options?.features || [];
     this.animationInterval = null;
     this.currentFeature = null;
     this.currentVariationSettings = 'normal';
-    this.horizontalPadding = 40;
+    this.paddingPercentage = 10; // Default 10% padding
 
     this.uiControls = new UIControls();
 
@@ -32,11 +38,16 @@ export class WordAnimator {
     });
 
     this.metricsOverlay = new MetricsOverlay();
-    this.textFitter = new TextFitter({ padding: this.horizontalPadding });
+
+    // Initialize TextFitter with percentage-based padding
+    this.textFitter = new TextFitter({
+      paddingPercentage: this.paddingPercentage
+    });
 
     this.setupEventListeners();
     this.loadWordList();
 
+    // Handle window resize
     window.addEventListener('resize', () => {
       if (this.container.firstChild) {
         this.textFitter.fitText(this.container.firstChild, this.container);
@@ -57,15 +68,33 @@ export class WordAnimator {
     // Initialize sliders
     const sliders = document.querySelectorAll('.slider-container');
 
-    // Font size slider (controls horizontal padding)
+    // Font size (padding) slider - now handling percentages
     const sizeContainer = sliders[0];
-    const sizeSlider = sizeContainer.querySelector('input[type="range"]');
+    const sizeSlider = sizeContainer?.querySelector('input[type="range"]');
+    const sizeValue = sizeContainer?.querySelector('.value');
+
+    // Update slider attributes for percentage
+    if (sizeSlider) {
+      sizeSlider.min = "0";
+      sizeSlider.max = "40";
+      sizeSlider.value = this.paddingPercentage.toString();
+      if (sizeValue) {
+        sizeValue.textContent = `${this.paddingPercentage}%`;
+      }
+    }
+
     sizeSlider?.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      this.horizontalPadding = val;
-      this.textFitter.padding = val;
+      const percentage = parseInt(e.target.value);
+      this.paddingPercentage = percentage;
+      this.textFitter.paddingPercentage = percentage;
+
+      if (sizeValue) {
+        sizeValue.textContent = `${percentage}%`;
+      }
+
+      // Always use this.container
       if (this.container.firstChild) {
-        this.textFitter.fitText(this.container.firstChild, document.querySelector('.display-container'));
+        this.textFitter.fitText(this.container.firstChild, this.container);
       }
     });
 
@@ -223,8 +252,8 @@ export class WordAnimator {
       this.container.innerHTML = '';
       this.container.appendChild(wordElement);
 
-      // Fit text using current horizontal padding
-      this.textFitter.fitText(wordElement, document.querySelector('.display-container'));
+      // Fit text using the container itself since it's now properly sized
+      this.textFitter.fitText(wordElement, this.container);
 
       this.container.classList.remove('fade-out');
     }, 300);
@@ -239,6 +268,9 @@ export class WordAnimator {
   }
 }
 
+// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
   new WordAnimator();
 });
+
+export { WordAnimator };
