@@ -53,6 +53,10 @@ class GalleyProof {
     this.setupEventListeners();
     this.loadText();
     this.initializeSliders();
+
+    this.openTypeFeatures = new OpenTypeFeatures((featureString) => {
+      this.updateFeatures(featureString);
+    });
   }
 
   initializeSliders() {
@@ -188,6 +192,12 @@ class GalleyProof {
     }
   }
 
+  updateFeatures(featureString) {
+    if (this.container.firstChild) {
+      this.container.firstChild.style.fontFeatureSettings = featureString;
+    }
+  }
+
   handleFontLoaded({ font, fontInfo, fontFamily }) {
     FontInfoRenderer.renderFontInfo(
       document.getElementById('font-info-content'),
@@ -203,11 +213,13 @@ class GalleyProof {
       textElement.style.lineHeight = '1.5';
       textElement.style.fontFamily = `"${fontFamily}"`;
       textElement.style.fontVariationSettings = this.currentVariationSettings;
+      textElement.style.fontFeatureSettings = 'normal'; // Initialize feature settings
       textElement.textContent = this.textContent;
 
       this.container.appendChild(textElement);
     } else {
       this.container.firstChild.style.fontFamily = `"${fontFamily}"`;
+      this.container.firstChild.style.fontFeatureSettings = 'normal'; // Reset feature settings
     }
 
     // Extract and set up OpenType features

@@ -3,10 +3,11 @@
 // =============================================================================
 
 class OpenTypeFeatures {
-  constructor() {
+  constructor(onFeaturesChanged) {
     this.activeFeatures = new Set();
     this.availableFeatures = new Set();
     this.buttonsContainer = document.querySelector('.buttons-container');
+    this.onFeaturesChanged = onFeaturesChanged;
   }
 
   extractFeatures(fontInfo) {
@@ -130,7 +131,14 @@ class OpenTypeFeatures {
     }
 
     this.updateButtonText(button, feature);
-    return this.getFeatureString();
+    const featureString = this.getFeatureString();
+
+    // Call the callback with the new feature string
+    if (this.onFeaturesChanged) {
+      this.onFeaturesChanged(featureString);
+    }
+
+    return featureString;
   }
 
   getFeatureString() {
