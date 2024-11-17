@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galley Proof BX90000 Zenith</title>
+    <!-- Import the OpenType.js library first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+    <!-- Import our modular JavaScript as a module -->
+    <script type="module" src="./galleyproof/GalleyProof.js"></script>
+    <!-- Original CSS remains the same -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./galleyproof/GalleyProof.css">
+</head>
+<body>
+    <div id="fullScreen">
+        <button>Fullscreen</button>
+    </div>
+
+    <div id="drop-text">
+        Drop your TTF or OTF font here
+    </div>
+
+    <div class="display-container">
+        <div id="galley"></div>
+        <div id="glyph-display" class="glyph-buffer"></div>
+    </div>
+
+    <div id="font-info" style="display: none;">
+        <div id="font-info-content"></div>
+    </div>
+
+    <div id="controls">
+        <div class="buttons-container">
+          <button id="font-info-toggle">Show font info</button>
+          <!-- <button id="font-opentype-features">Show features</button> -->
+          <!-- <button id="metrics-toggle">Show metrics</button> -->
+          <button id="background-toggle">Swap colours</button>
+        </div>
+
+        <div class="slider-container">
+          <label>Font size</label>
+          <input type="range" min="10" max="1000" value="600">
+          <span class="value">600px</span>
+        </div>
+
+        <div class="slider-container">
+          <label>Animation delay</label>
+          <input type="range" min="100" max="10000" value="3000">
+          <span class="value">3000ms</span>
+        </div>
+</body>
+</html>
