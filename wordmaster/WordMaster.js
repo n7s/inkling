@@ -19,6 +19,7 @@ class WordAnimator {
       this.container.style.position = 'relative';
     }
     this.wordList = [];
+    this.processedWordList = [];  // New array to store words with case variations
     this.features = options?.features || [];
     this.animationTimer = null;
     this.fadeTimer = null;
@@ -214,10 +215,27 @@ class WordAnimator {
       const response = await fetch('../word_lists/euro_words.txt');
       const text = await response.text();
       this.wordList = text.split('\n').filter(word => word.trim());
+      this.processWordList();
     } catch (error) {
       console.error('Error loading word list:', error);
       this.wordList = ['OpenType', 'Features', 'Typography', 'Design'];
+      this.processedWordList = this.wordList;
     }
+  }
+
+  processWordList() {
+    this.processedWordList = this.wordList.map(word => {
+      // Only modify words that are completely lowercase
+      if (word === word.toLowerCase()) {
+        const random = Math.random();
+        if (random < 0.05) {  // 5% chance for ALL CAPS
+          return word.toUpperCase();
+        } else if (random < 0.15) {  // Additional 10% chance for Capitalized
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+      }
+      return word;  // Keep original case for all other words
+    });
   }
 
   handleFontLoaded({ font, fontInfo, fontFamily }) {
@@ -301,7 +319,7 @@ class WordAnimator {
   }
 
   getRandomWord() {
-    return this.wordList[Math.floor(Math.random() * this.wordList.length)];
+    return this.processedWordList[Math.floor(Math.random() * this.processedWordList.length)];
   }
 
   getRandomFeature() {
