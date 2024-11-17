@@ -73,26 +73,29 @@ class WordAnimator {
     const sizeSlider = sizeContainer?.querySelector('input[type="range"]');
     const sizeValue = sizeContainer?.querySelector('.value');
 
-    // Update slider attributes for percentage
+    // Update slider attributes for percentage (20-100% size range)
     if (sizeSlider) {
-      sizeSlider.min = "0";
-      sizeSlider.max = "40";
-      sizeSlider.value = this.paddingPercentage.toString();
+      sizeSlider.min = "20";  // Minimum size percentage
+      sizeSlider.max = "100"; // Maximum size percentage
+      const initialSize = 90;  // Initial size percentage
+      sizeSlider.value = initialSize.toString();
+      this.paddingPercentage = 40 - ((initialSize - 20) * 40 / 80); // Convert size % to padding %
+
       if (sizeValue) {
-        sizeValue.textContent = `${this.paddingPercentage}%`;
+        sizeValue.textContent = `${initialSize}%`;
       }
     }
 
     sizeSlider?.addEventListener('input', (e) => {
-      const percentage = parseInt(e.target.value);
-      this.paddingPercentage = percentage;
-      this.textFitter.paddingPercentage = percentage;
+      const sizePercentage = parseInt(e.target.value);
+      // Convert size percentage (20-100) to padding percentage (40-0)
+      this.paddingPercentage = 40 - ((sizePercentage - 20) * 40 / 80);
+      this.textFitter.paddingPercentage = this.paddingPercentage;
 
       if (sizeValue) {
-        sizeValue.textContent = `${percentage}%`;
+        sizeValue.textContent = `${sizePercentage}%`;
       }
 
-      // Always use this.container
       if (this.container.firstChild) {
         this.textFitter.fitText(this.container.firstChild, this.container);
       }
