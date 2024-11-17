@@ -1,5 +1,5 @@
 // =============================================================================
-// wordmaster/WordAnimator.js
+// wordmaster/WordMaster.js
 // =============================================================================
 
 import { FontLoader } from '../core/FontLoader.js';
@@ -28,7 +28,10 @@ class WordAnimator {
     this.animationDelay = 3000;
     this.isAnimating = false;
 
-    this.openTypeFeatures = new OpenTypeFeatures();
+    this.openTypeFeatures = new OpenTypeFeatures((featureString) => {
+      this.updateFeatures(featureString);
+    });
+
     this.uiControls = new UIControls();
 
     this.fontLoader = new FontLoader({
@@ -69,6 +72,14 @@ class WordAnimator {
     });
 
     this.initializeSliders();
+  }
+
+  updateFeatures(featureString) {
+    if (this.container.firstChild) {
+      this.container.firstChild.style.fontFeatureSettings = featureString;
+      // Re-fit text since some features might affect word width
+      this.textFitter.fitText(this.container.firstChild, this.container);
+    }
   }
 
   initializeSliders() {
@@ -277,8 +288,9 @@ class WordAnimator {
       wordElement.textContent = word;
       wordElement.style.whiteSpace = 'nowrap';
 
-      // Apply active OpenType features
-      wordElement.style.fontFeatureSettings = this.openTypeFeatures.getFeatureString();
+      // Apply current OpenType features and variation settings
+      const currentFeatures = this.openTypeFeatures.getFeatureString();
+      wordElement.style.fontFeatureSettings = currentFeatures;
       wordElement.style.fontVariationSettings = this.currentVariationSettings;
 
       this.container.innerHTML = '';
