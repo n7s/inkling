@@ -18,6 +18,7 @@ export class WordAnimator {
     this.animationInterval = null;
     this.currentFeature = null;
     this.currentVariationSettings = 'normal';
+    this.horizontalPadding = 40;
 
     this.fontLoader = new FontLoader({
       onFontLoaded: this.handleFontLoaded.bind(this)
@@ -29,7 +30,7 @@ export class WordAnimator {
     });
 
     this.uiControls = new UIControls();
-    this.textFitter = new TextFitter({ padding: 40 });
+    this.textFitter = new TextFitter({ padding: this.horizontalPadding });
 
     this.setupEventListeners();
     this.loadWordList();
@@ -49,6 +50,32 @@ export class WordAnimator {
           this.container.firstChild.style.fontVariationSettings = settings;
         }
       }
+    });
+
+    // Initialize sliders
+    const sliders = document.querySelectorAll('.slider-container');
+
+    // Font size slider (controls horizontal padding)
+    const sizeContainer = sliders[0];
+    const sizeSlider = sizeContainer.querySelector('input[type="range"]');
+    sizeSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      this.horizontalPadding = val;
+      this.textFitter.padding = val;
+      if (this.container.firstChild) {
+        this.textFitter.fitText(this.container.firstChild, document.querySelector('.display-container'));
+      }
+    });
+
+    // Animation delay slider
+    const delayContainer = sliders[1];
+    const delaySlider = delayContainer.querySelector('input[type="range"]');
+    const delayValue = delayContainer.querySelector('.value');
+    delaySlider.addEventListener('input', (e) => {
+      const delay = e.target.value;
+      delayValue.textContent = delay + 'ms';
+      this.stop();
+      this.start(parseInt(delay));
     });
   }
 
@@ -138,7 +165,7 @@ export class WordAnimator {
       this.container.innerHTML = '';
       this.container.appendChild(wordElement);
 
-      // Fit text only after applying all settings
+      // Fit text using current horizontal padding
       this.textFitter.fitText(wordElement, document.querySelector('.display-container'));
 
       this.container.classList.remove('fade-out');
