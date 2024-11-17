@@ -17,6 +17,7 @@ export class WordAnimator {
     this.features = options?.features || [];
     this.animationInterval = null;
     this.currentFeature = null;
+    this.currentVariationSettings = 'normal';
 
     this.fontLoader = new FontLoader({
       onFontLoaded: this.handleFontLoaded.bind(this)
@@ -28,15 +29,25 @@ export class WordAnimator {
     });
 
     this.uiControls = new UIControls();
-    this.textFitter = new TextFitter({ padding: 40 }); // Initialize with padding
+    this.textFitter = new TextFitter({ padding: 40 });
 
     this.setupEventListeners();
     this.loadWordList();
 
-    // Add window resize handler
     window.addEventListener('resize', () => {
       if (this.container.firstChild) {
         this.textFitter.fitText(this.container.firstChild, this.container);
+      }
+    });
+
+    // Initialize VariationAxes
+    this.variationAxes = new VariationAxes({
+      container: document.getElementById('controls'),
+      onChange: (settings) => {
+        if (this.container.firstChild) {
+          this.currentVariationSettings = settings;
+          this.container.firstChild.style.fontVariationSettings = settings;
+        }
       }
     });
   }
@@ -58,12 +69,17 @@ export class WordAnimator {
       fontInfo.style.display = fontInfo.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('features-toggle')?.addEventListener('click', () => {
+    document.getElementById('font-opentype-features')?.addEventListener('click', () => {
       const featureInfo = document.getElementById('feature-info');
       featureInfo.style.display = featureInfo.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('color-toggle')?.addEventListener('click', () => {
+    document.getElementById('metrics-toggle')?.addEventListener('click', () => {
+      const metricsOverlay = document.getElementById('font-metrics-overlay');
+      metricsOverlay.style.display = metricsOverlay.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('background-toggle')?.addEventListener('click', () => {
       this.uiControls.toggleColorScheme();
     });
   }
@@ -75,6 +91,12 @@ export class WordAnimator {
     );
 
     this.container.style.fontFamily = fontFamily;
+
+    // Create axis controls if font has variable axes
+    if (fontInfo.axes) {
+      this.variationAxes.createAxesControls(fontInfo.axes);
+    }
+
     this.start();
   }
 
@@ -102,7 +124,7 @@ export class WordAnimator {
       const word = this.getRandomWord();
       const wordElement = document.createElement('div');
       wordElement.textContent = word;
-      wordElement.style.whiteSpace = 'nowrap'; // Prevent word wrapping
+      wordElement.style.whiteSpace = 'nowrap';
 
       if (this.features.length > 0) {
         const feature = this.getRandomFeature();
@@ -110,10 +132,13 @@ export class WordAnimator {
         this.currentFeature = feature;
       }
 
+      // Apply current variation settings before adding to DOM
+      wordElement.style.fontVariationSettings = this.currentVariationSettings;
+
       this.container.innerHTML = '';
       this.container.appendChild(wordElement);
 
-      // Fit text to container
+      // Fit text only after applying all settings
       this.textFitter.fitText(wordElement, document.querySelector('.display-container'));
 
       this.container.classList.remove('fade-out');
@@ -129,7 +154,6 @@ export class WordAnimator {
   }
 }
 
-// Initialize the WordAnimator when the document loads
 document.addEventListener('DOMContentLoaded', () => {
   new WordAnimator();
 });

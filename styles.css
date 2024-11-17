@@ -108,6 +108,10 @@ p > semibold {
   overflow: hidden;
 }
 
+.display-container #word {
+  color: var(--black);
+}
+
 .glyph-buffer {
   color: var(--black);
   font-size: 600px;
