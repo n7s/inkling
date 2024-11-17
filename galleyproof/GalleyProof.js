@@ -66,7 +66,7 @@ class GalleyProof {
     if (sizeSlider) {
       sizeSlider.min = "0.3";
       sizeSlider.max = "8";
-      sizeSlider.step = "0.1";
+      sizeSlider.step = "0.01";
       const initialSize = 1;
       sizeSlider.value = initialSize.toString();
 
@@ -93,8 +93,8 @@ class GalleyProof {
     if (leadingSlider) {
       leadingSlider.min = "0.5";
       leadingSlider.max = "4";
-      leadingSlider.step = "0.1";
-      const initialLeading = 1.5;
+      leadingSlider.step = "0.01";
+      const initialLeading = 1.2;
       leadingSlider.value = initialLeading.toString();
 
       if (leadingValue) {

@@ -1,6 +1,7 @@
 #galley {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  color: var(--black);
 }
 
 #galley::-webkit-scrollbar {
@@ -13,4 +14,8 @@
   width: 60%;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+#galley > p+p {
+  z-index: 1.2rem;
 }
