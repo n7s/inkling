@@ -33,6 +33,19 @@ p > semibold {
   font-family: var(--system-mono);
 }
 
+#index_link > a {
+  font-weight: 600;
+  color: var(--black);
+}
+
+#index_link > a:link {
+  text-decoration: none;
+}
+
+#index_link {
+  margin-bottom: 28px;
+}
+
 #fullScreen {
   float: right;
   margin-left: auto;
