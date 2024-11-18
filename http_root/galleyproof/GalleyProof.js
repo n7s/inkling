@@ -51,7 +51,6 @@ class GalleyProof {
     });
 
     this.setupEventListeners();
-    this.loadText();
     this.initializeSliders();
 
     this.openTypeFeatures = new OpenTypeFeatures((featureString) => {
@@ -184,17 +183,23 @@ class GalleyProof {
 
   async loadText() {
     try {
-      const response = await fetch('../word_lists/kongens_fald.txt');
-      this.textContent = await response.text();
+      const response = await fetch('../word_lists/kongens_fald_html.txt');
+      const htmlContent = await response.text();
+
+      // Create text container if it doesn't exist
+      if (!this.container.firstChild) {
+        const textElement = document.createElement('div');
+        textElement.innerHTML = htmlContent;
+        textElement.style.width = '60%';
+        textElement.style.fontSize = '1rem';
+        textElement.style.lineHeight = '1.5';
+        this.container.appendChild(textElement);
+      } else {
+        this.container.firstChild.innerHTML = htmlContent;
+      }
     } catch (error) {
       console.error('Error loading text:', error);
-      this.textContent = 'Error loading text. Please ensure kongens_fald.txt is available.';
-    }
-  }
-
-  updateFeatures(featureString) {
-    if (this.container.firstChild) {
-      this.container.firstChild.style.fontFeatureSettings = featureString;
+      this.textContent = 'Error loading text. Please ensure kongens_fald_html.txt is available.';
     }
   }
 
@@ -204,32 +209,26 @@ class GalleyProof {
       fontInfo
     );
 
-    // Create text container if it doesn't exist
-    if (!this.container.firstChild) {
-      const textElement = document.createElement('div');
-      textElement.style.whiteSpace = 'pre-wrap';
-      textElement.style.width = '60%';
-      textElement.style.fontSize = '1rem';
-      textElement.style.lineHeight = '1.5';
-      textElement.style.fontFamily = `"${fontFamily}"`;
-      textElement.style.fontVariationSettings = this.currentVariationSettings;
-      textElement.style.fontFeatureSettings = 'normal'; // Initialize feature settings
-      textElement.textContent = this.textContent;
+    this.loadText().then(() => {
+      const textElement = this.container.firstChild;
+      if (textElement) {
+        textElement.style.fontFamily = `"${fontFamily}"`;
+        textElement.style.fontFeatureSettings = 'normal';
+      }
+    });
 
-      this.container.appendChild(textElement);
-    } else {
-      this.container.firstChild.style.fontFamily = `"${fontFamily}"`;
-      this.container.firstChild.style.fontFeatureSettings = 'normal'; // Reset feature settings
-    }
-
-    // Extract and set up OpenType features
     this.openTypeFeatures.clear();
     this.openTypeFeatures.extractFeatures(fontInfo);
     this.openTypeFeatures.createButtons();
 
-    // Create axis controls if font has variable axes
     if (fontInfo.axes) {
       this.variationAxes.createAxesControls(fontInfo.axes);
+    }
+  }
+
+  updateFeatures(featureString) {
+    if (this.container.firstChild) {
+      this.container.firstChild.style.fontFeatureSettings = featureString;
     }
   }
 }
