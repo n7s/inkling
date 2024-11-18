@@ -1,5 +1,5 @@
 :root {
-  --galley-font-size: 0.7rem;
+  --galley-font-size: 1rem;
 }
 
 #galley {
@@ -20,15 +20,18 @@
 }
 
 #galley > div > h3 {
-  font-size: 1.8rem;
+  font-size: calc(var(--galley-font-size) * 1.6);
+  font-weight: 400;
   margin: 0rem;
-  margin-top: 2rem;
+  margin-top: calc(var(--galley-font-size) * 1.6);
+  margin-bottom: 0.2rem;
   text-align: center;
   letter-spacing: 0.2rem;
   font-feature-settings: "smcp" 1, "c2sc" 1;
 }
 
 #galley > div > p {
+  font-size: var(--galley-font-size);
   margin-top: 0rem;
   margin-bottom: 0rem;
 }

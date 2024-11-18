@@ -84,7 +84,7 @@ class GalleyProof {
         sizeValue.textContent = `${fontSize}rem`;
       }
       if (this.container.firstChild) {
-        this.container.firstChild.style.fontSize = `${fontSize}rem`;
+        document.documentElement.style.setProperty('--galley-font-size', `${fontSize}rem`);
       }
     });
 
