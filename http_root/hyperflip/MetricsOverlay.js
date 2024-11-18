@@ -9,29 +9,35 @@ export class MetricsOverlay {
   }
 
   render(font, glyphElement) {
-    if (!this.isVisible) return;
+    if (!this.isVisible || !glyphElement) return;
 
     this.overlay.innerHTML = '';
-    const currentChar = glyphElement.textContent;
-    const metrics = this.calculateMetrics(font, glyphElement, currentChar);
 
+    const currentChar = glyphElement.textContent;
+    if (!currentChar) return;
+
+    const metrics = this.calculateMetrics(font, glyphElement, currentChar);
     this.renderMetricLines(metrics, font);
     this.renderBearingLines(metrics);
   }
 
   calculateMetrics(font, glyphElement, currentChar) {
-    const glyphIndex = font.charToGlyphIndex(currentChar);
-    const glyph = font.glyphs.get(glyphIndex);
-    const fontSize = parseInt(getComputedStyle(glyphElement).fontSize);
-
-    // Use the font's actual UPM value
+    const computedStyle = getComputedStyle(glyphElement);
+    const fontSize = parseInt(computedStyle.fontSize);
     const unitsPerEm = font.unitsPerEm;
+
+    // Basic metrics scale based on font size
     const metricsScale = fontSize / unitsPerEm;
 
-    // Get the glyph element's position
+    // Get the glyph element's metrics
     const glyphRect = glyphElement.getBoundingClientRect();
+    const renderedWidth = glyphRect.width;
     const verticalCenter = glyphRect.top + (glyphRect.height / 2);
     const horizontalCenter = glyphRect.left + (glyphRect.width / 2);
+
+    // Get glyph info
+    const glyphIndex = font.charToGlyphIndex(currentChar);
+    const glyph = font.glyphs.get(glyphIndex);
 
     // The total height in font units from descender to ascender
     const totalHeight = font.tables.os2.sTypoAscender - font.tables.os2.sTypoDescender;
@@ -40,7 +46,6 @@ export class MetricsOverlay {
     const baselineOffset = font.tables.os2.sTypoAscender;
 
     // Calculate where the baseline should be relative to the center
-    // First, get the ratio of the baseline position within the total height
     const baselineRatio = baselineOffset / totalHeight;
 
     // Scale the total height to pixels
@@ -56,7 +61,7 @@ export class MetricsOverlay {
       glyphRect,
       containerCenter: horizontalCenter,
       baseline,
-      // Calculate other metrics relative to the baseline using the metricsScale
+      renderedWidth,
       ascender: baseline - (font.tables.os2.sTypoAscender * metricsScale),
       descender: baseline - (font.tables.os2.sTypoDescender * metricsScale),
       capHeight: baseline - (font.tables.os2.sCapHeight * metricsScale),
@@ -98,9 +103,12 @@ export class MetricsOverlay {
   }
 
   renderBearingLines(metrics) {
-    const scaledAdvanceWidth = metrics.glyph.advanceWidth * metrics.metricsScale;
-    const leftPos = metrics.containerCenter - (scaledAdvanceWidth / 2);
-    const rightPos = leftPos + scaledAdvanceWidth;
+    if (!metrics.glyph) return;
+
+    // Use the rendered width for sidebearings, which takes into account both
+    // font size and any active variation settings
+    const leftPos = metrics.containerCenter - (metrics.renderedWidth / 2);
+    const rightPos = leftPos + metrics.renderedWidth;
 
     [leftPos, rightPos].forEach(pos => {
       if (isFinite(pos)) {

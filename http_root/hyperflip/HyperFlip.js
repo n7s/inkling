@@ -213,7 +213,13 @@ class FontViewer {
   }
 
   handleAxesChange(settings) {
-    document.querySelector('.glyph-buffer').style.fontVariationSettings = settings;
+    const displayElement = document.querySelector('.glyph-buffer');
+    displayElement.style.fontVariationSettings = settings;
+
+    // Just trigger a metrics overlay update - the browser will handle the variations
+    if (this.metricsOverlay.isVisible) {
+      this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
+    }
   }
 
   handleKeyPress(event) {
