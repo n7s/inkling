@@ -167,12 +167,26 @@ p > semibold {
 #glyph-info {
   position: fixed;
   top: 14px;
-  left: calc(50% - 50px);
+  right: 70px;
   color: var(--black);
 }
 
 #glyph-info-content > p {
   margin-top: 0px;
+}
+
+.glyph-info-container {
+  display: flex;
+  gap: 14px;
+}
+
+.info-column {
+  width: 140px;
+  padding: 0px;
+}
+
+.info-column > p {
+  margin: 0px;
 }
 
 #controls {
