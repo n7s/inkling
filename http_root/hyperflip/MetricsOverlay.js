@@ -65,27 +65,56 @@ export class MetricsOverlay {
       ascender: baseline - (font.tables.os2.sTypoAscender * metricsScale),
       descender: baseline - (font.tables.os2.sTypoDescender * metricsScale),
       capHeight: baseline - (font.tables.os2.sCapHeight * metricsScale),
-      xHeight: baseline - (font.tables.os2.sxHeight * metricsScale)
+      xHeight: baseline - (font.tables.os2.sxHeight * metricsScale),
+      // Store the original values from the font file
+      originalMetrics: {
+        ascender: font.tables.os2.sTypoAscender,
+        descender: font.tables.os2.sTypoDescender,
+        capHeight: font.tables.os2.sCapHeight,
+        xHeight: font.tables.os2.sxHeight,
+        smallCapHeight: font.tables.os2.sSmallCapHeight
+      }
     };
   }
 
   renderMetricLines(metrics, font) {
     const lines = [
-      { pos: metrics.baseline, label: 'Baseline' },
-      { pos: metrics.ascender, label: 'Ascender' },
-      { pos: metrics.descender, label: 'Descender' },
-      { pos: metrics.capHeight, label: 'Capital height' },
-      { pos: metrics.xHeight, label: 'x-height' }
+      {
+        pos: metrics.baseline,
+        label: 'Baseline',
+        value: 0 // Baseline is reference point 0
+      },
+      {
+        pos: metrics.ascender,
+        label: 'Ascender',
+        value: metrics.originalMetrics.ascender
+      },
+      {
+        pos: metrics.descender,
+        label: 'Descender',
+        value: metrics.originalMetrics.descender
+      },
+      {
+        pos: metrics.capHeight,
+        label: 'Capital height',
+        value: metrics.originalMetrics.capHeight
+      },
+      {
+        pos: metrics.xHeight,
+        label: 'x-height',
+        value: metrics.originalMetrics.xHeight
+      }
     ];
 
     if (font.tables.os2.sSmallCapHeight) {
       lines.push({
         pos: metrics.baseline - (font.tables.os2.sSmallCapHeight * metrics.metricsScale),
-        label: 'Small Caps'
+        label: 'Small Caps',
+        value: metrics.originalMetrics.smallCapHeight
       });
     }
 
-    lines.forEach(({ pos, label }) => {
+    lines.forEach(({ pos, label, value }) => {
       if (isFinite(pos)) {
         const line = document.createElement('div');
         line.className = 'metric-line';
@@ -94,7 +123,15 @@ export class MetricsOverlay {
         const legend = document.createElement('div');
         legend.className = 'legend';
         legend.style.top = `${pos - 21}px`;
-        legend.textContent = label;
+
+        // Create the formatted legend content
+        const labelText = document.createTextNode(`${label} → `);
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'monospaced';
+        valueSpan.textContent = `${value}`;
+
+        legend.appendChild(labelText);
+        legend.appendChild(valueSpan);
 
         this.overlay.appendChild(line);
         this.overlay.appendChild(legend);
