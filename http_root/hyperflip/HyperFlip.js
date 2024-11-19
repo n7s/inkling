@@ -64,6 +64,19 @@ class FontViewer {
       });
     }
 
+    // Add resize observer to handle window resizes and fullscreen changes
+    const resizeObserver = new ResizeObserver(() => {
+      if (this.metricsOverlay.isVisible) {
+        this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
+      }
+    });
+
+    // Observe the display container
+    const displayContainer = document.querySelector('.display-container');
+    if (displayContainer) {
+      resizeObserver.observe(displayContainer);
+    }
+
     // Font info toggle
     const fontInfoToggle = document.getElementById('font-info-toggle');
     if (fontInfoToggle) {
@@ -129,8 +142,14 @@ class FontViewer {
         const newSize = e.target.value;
         this.glyphAnimator.displayElement.style.fontSize = `${newSize}px`;
         e.target.nextElementSibling.textContent = `${newSize}px`;
+
+        // Update metrics overlay when font size changes
+        if (this.metricsOverlay.isVisible) {
+          this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
+        }
       });
     }
+
 
     // Animation delay slider
     const speedSlider = document.getElementById('animation-delay');
