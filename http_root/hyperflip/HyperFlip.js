@@ -150,7 +150,6 @@ class FontViewer {
       });
     }
 
-
     // Animation delay slider
     const speedSlider = document.getElementById('animation-delay');
     if (speedSlider) {
@@ -172,6 +171,11 @@ class FontViewer {
         const reversedPosition = e.target.max - e.target.value;
         this.glyphAnimator.displayElement.style.top = `${reversedPosition - 50}%`;
         e.target.nextElementSibling.textContent = `${reversedPosition}%`;
+
+        // Update metrics overlay when vertical position changes
+        if (this.metricsOverlay.isVisible) {
+          this.metricsOverlay.render(this.fontLoader.currentFont, this.glyphAnimator.displayElement);
+        }
       });
     }
   }
