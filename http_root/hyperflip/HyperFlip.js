@@ -110,7 +110,7 @@ class FontViewer {
         if (this.glyphAnimator) {
           this.glyphAnimator.toggleOrder();
           randomizeButton.textContent = this.glyphAnimator.isRandomOrder ?
-            'Sequential glyph order' : 'Randomize glyph order';
+          'Sequential glyph order' : 'Randomize glyph order';
         }
       });
     }
@@ -213,9 +213,9 @@ class FontViewer {
     // Start glyph animation with the correct font
     try {
       this.glyphAnimator.setGlyphsFromFont(font)
-        .then(() => {
-          this.glyphAnimator.start(100);
-        });
+      .then(() => {
+        this.glyphAnimator.start(100);
+      });
     } catch (error) {
       this.handleError(error);
     }
@@ -248,34 +248,34 @@ class FontViewer {
   handleKeyPress(event) {
     switch(event.key) {
       case ' ':
-        event.preventDefault();
-        this.glyphAnimator.isAnimating ?
-          this.glyphAnimator.stop() :
-          this.glyphAnimator.start(parseInt(document.getElementById('animation-delay')?.value || 100));
-        break;
+      event.preventDefault();
+      this.glyphAnimator.isAnimating ?
+      this.glyphAnimator.stop() :
+      this.glyphAnimator.start(parseInt(document.getElementById('animation-delay')?.value || 100));
+      break;
       case 'f':
-        this.uiControls.toggleFullscreen();
-        break;
+      this.uiControls.toggleFullscreen();
+      break;
       case 'ArrowLeft':
       case 'h':
-        this.glyphAnimator.stop();
-        this.glyphAnimator.moveBack(10);
-        break;
+      this.glyphAnimator.stop();
+      this.glyphAnimator.moveBack(10);
+      break;
       case 'j':
       case 'ArrowDown':
-        this.glyphAnimator.stop();
-        this.glyphAnimator.moveBack(1);
-        break;
+      this.glyphAnimator.stop();
+      this.glyphAnimator.moveBack(1);
+      break;
       case 'ArrowRight':
       case 'l':
-        this.glyphAnimator.stop();
-        this.glyphAnimator.moveForward(10);
-        break;
+      this.glyphAnimator.stop();
+      this.glyphAnimator.moveForward(10);
+      break;
       case 'k':
       case 'ArrowUp':
-        this.glyphAnimator.stop();
-        this.glyphAnimator.moveForward(1);
-        break;
+      this.glyphAnimator.stop();
+      this.glyphAnimator.moveForward(1);
+      break;
     }
   }
 }
