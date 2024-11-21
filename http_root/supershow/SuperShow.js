@@ -21,6 +21,10 @@ class SuperShow {
     this.currentSpeed = 10;
     this.currentAngle = 90;
 
+    // Initialize color tracking
+    this.foregroundColor = null;  // Start with no colors
+    this.backgroundColor = null;
+
     // Initialize components
     this.uiControls = new UIControls();
     this.fontLoader = new FontLoader({
@@ -35,26 +39,6 @@ class SuperShow {
     // Initialize features
     this.setupEventListeners();
     this.loadWordList();
-  }
-
-  stop() {
-    this.isAnimating = false;
-    if (this.wordStream) {
-      // Clear existing lines
-      this.wordStream.innerHTML = '';
-      this.lines = [];
-    }
-  }
-
-  async loadWordList() {
-    try {
-      const response = await fetch('../word_lists/euro_words.txt');
-      const text = await response.text();
-      this.words = text.split('\n').filter(word => word.trim());
-    } catch (error) {
-      console.error('Error loading word list:', error);
-      this.words = ['Typography', 'Design', 'Letters', 'Words'];
-    }
   }
 
   setupEventListeners() {
@@ -83,41 +67,37 @@ class SuperShow {
     // Color controls
     const foregroundSelect = document.getElementById('foreground-color');
     const backgroundSelect = document.getElementById('background-color');
-    const backgroundToggle = document.getElementById('background-toggle');
+    const swapButton = document.getElementById('background-toggle');
 
-    if (foregroundSelect && backgroundSelect && backgroundToggle) {
-      // Set initial colors
-      this.updateColors(foregroundSelect.value, backgroundSelect.value);
-
+    if (foregroundSelect && backgroundSelect && swapButton) {
       // Color select handlers
       foregroundSelect.addEventListener('change', () => {
-        this.updateColors(foregroundSelect.value, backgroundSelect.value);
+        this.foregroundColor = foregroundSelect.value;
+        this.updateWordColors();
       });
 
       backgroundSelect.addEventListener('change', () => {
-        this.updateColors(foregroundSelect.value, backgroundSelect.value);
+        this.backgroundColor = backgroundSelect.value;
+        this.updateBackground();
       });
 
       // Swap colors button
-      backgroundToggle.addEventListener('click', () => {
-        const currentFg = foregroundSelect.value;
-        const currentBg = backgroundSelect.value;
+      swapButton.addEventListener('click', () => {
+        // Store current values
+        const tempFg = this.foregroundColor;
+        const tempBg = this.backgroundColor;
 
-        // Find and select the opposite colors in the dropdowns
-        Array.from(foregroundSelect.options).forEach(option => {
-          if (option.value === currentBg) {
-            option.selected = true;
-          }
-        });
+        // Swap the colors
+        this.foregroundColor = tempBg;
+        this.backgroundColor = tempFg;
 
-        Array.from(backgroundSelect.options).forEach(option => {
-          if (option.value === currentFg) {
-            option.selected = true;
-          }
-        });
+        // Update the dropdowns
+        foregroundSelect.value = this.foregroundColor;
+        backgroundSelect.value = this.backgroundColor;
 
-        // Update the actual colors
-        this.updateColors(currentBg, currentFg);
+        // Update the display
+        this.updateWordColors();
+        this.updateBackground();
       });
     }
 
@@ -159,6 +139,44 @@ class SuperShow {
     });
   }
 
+  updateWordColors() {
+    if (!this.foregroundColor) return;
+
+    // Update all existing word elements
+    const wordElements = document.querySelectorAll('.stream-word');
+    wordElements.forEach(element => {
+      element.style.color = this.foregroundColor;
+    });
+  }
+
+  updateBackground() {
+    if (!this.backgroundColor) return;
+
+    if (this.container) {
+      this.container.style.backgroundColor = this.backgroundColor;
+    }
+  }
+
+  stop() {
+    this.isAnimating = false;
+    if (this.wordStream) {
+      // Clear existing lines
+      this.wordStream.innerHTML = '';
+      this.lines = [];
+    }
+  }
+
+  async loadWordList() {
+    try {
+      const response = await fetch('../word_lists/euro_words.txt');
+      const text = await response.text();
+      this.words = text.split('\n').filter(word => word.trim());
+    } catch (error) {
+      console.error('Error loading word list:', error);
+      this.words = ['Typography', 'Design', 'Letters', 'Words'];
+    }
+  }
+
   async handleFontDrop(buffer, filename) {
     try {
       // Create OpenType features instance for this font
@@ -191,7 +209,6 @@ class SuperShow {
   }
 
   handleFontLoaded(fontData) {
-    // This is now just a callback hook if needed
     console.log('Font loaded:', fontData.fontFamily);
   }
 
@@ -203,9 +220,9 @@ class SuperShow {
     element.className = 'stream-word';
     element.textContent = this.transformCase(word);
 
-    // Apply current color
-    if (this.currentForegroundColor) {
-      element.style.color = this.currentForegroundColor;
+    // Apply current foreground color if set
+    if (this.foregroundColor) {
+      element.style.color = this.foregroundColor;
     }
 
     if (font) {
@@ -227,8 +244,6 @@ class SuperShow {
         });
         element.style.fontVariationSettings = settings.join(', ');
       }
-
-      return element;
     }
 
     return element;
@@ -316,24 +331,6 @@ class SuperShow {
     if (this.wordStream) {
       this.wordStream.style.transform = `rotate(${this.currentAngle}deg)`;
     }
-  }
-
-  // Update the color handling method
-  updateColors(foregroundColor, backgroundColor) {
-    // Only update the display container background
-    if (this.container) {
-      this.container.style.backgroundColor = backgroundColor;
-    }
-
-    // Update all existing word elements
-    const wordElements = document.querySelectorAll('.stream-word');
-    wordElements.forEach(element => {
-      element.style.color = foregroundColor;
-    });
-
-    // Store current colors for new words
-    this.currentForegroundColor = foregroundColor;
-    this.currentBackgroundColor = backgroundColor;
   }
 }
 
