@@ -37,6 +37,15 @@ class SuperShow {
     this.loadWordList();
   }
 
+  stop() {
+    this.isAnimating = false;
+    if (this.wordStream) {
+      // Clear existing lines
+      this.wordStream.innerHTML = '';
+      this.lines = [];
+    }
+  }
+
   async loadWordList() {
     try {
       const response = await fetch('../word_lists/euro_words.txt');
@@ -50,42 +59,104 @@ class SuperShow {
 
   setupEventListeners() {
     // Animation speed control
-    const speedSlider = document.querySelector('.slider-container:nth-child(2) input');
-    const speedValue = document.querySelector('.slider-container:nth-child(2) .value');
+    const speedSlider = document.getElementById('speed-slider');
+    const speedValue = document.querySelector('.speed-value');
     if (speedSlider && speedValue) {
       speedSlider.addEventListener('input', (e) => {
         this.currentSpeed = parseInt(e.target.value);
-        speedValue.textContent = `${this.currentSpeed}ms`;
+        speedValue.textContent = this.currentSpeed;
         this.updateAnimation();
       });
     }
 
     // Rotation control
-    const angleSlider = document.querySelector('.slider-container:nth-child(3) input');
-    const angleValue = document.querySelector('.slider-container:nth-child(3) .value');
-    if (angleSlider && angleValue) {
-      angleSlider.addEventListener('input', (e) => {
+    const rotationSlider = document.getElementById('rotation-slider');
+    const rotationValue = rotationSlider?.parentElement.querySelector('.value');
+    if (rotationSlider && rotationValue) {
+      rotationSlider.addEventListener('input', (e) => {
         this.currentAngle = parseInt(e.target.value);
-        angleValue.textContent = `${this.currentAngle}°`;
+        rotationValue.textContent = `${this.currentAngle}°`;
         this.updateRotation();
       });
     }
 
-    // Color swap button
-    const swapButton = document.querySelector('.buttons-container button:nth-child(2)');
-    if (swapButton) {
-      swapButton.addEventListener('click', () => {
-        this.uiControls.toggleColorScheme();
+    // Color controls
+    const foregroundSelect = document.getElementById('foreground-color');
+    const backgroundSelect = document.getElementById('background-color');
+    const backgroundToggle = document.getElementById('background-toggle');
+
+    if (foregroundSelect && backgroundSelect && backgroundToggle) {
+      // Set initial colors
+      this.updateColors(foregroundSelect.value, backgroundSelect.value);
+
+      // Color select handlers
+      foregroundSelect.addEventListener('change', () => {
+        this.updateColors(foregroundSelect.value, backgroundSelect.value);
+      });
+
+      backgroundSelect.addEventListener('change', () => {
+        this.updateColors(foregroundSelect.value, backgroundSelect.value);
+      });
+
+      // Swap colors button
+      backgroundToggle.addEventListener('click', () => {
+        const currentFg = foregroundSelect.value;
+        const currentBg = backgroundSelect.value;
+
+        // Find and select the opposite colors in the dropdowns
+        Array.from(foregroundSelect.options).forEach(option => {
+          if (option.value === currentBg) {
+            option.selected = true;
+          }
+        });
+
+        Array.from(backgroundSelect.options).forEach(option => {
+          if (option.value === currentFg) {
+            option.selected = true;
+          }
+        });
+
+        // Update the actual colors
+        this.updateColors(currentBg, currentFg);
       });
     }
 
-    // Fullscreen button
+    // Font info toggle
+    const fontInfoToggle = document.getElementById('font-info-toggle');
+    const fontInfo = document.getElementById('font-info');
+    if (fontInfoToggle && fontInfo) {
+      fontInfoToggle.addEventListener('click', () => {
+        const isVisible = fontInfo.style.display !== 'none';
+        fontInfo.style.display = isVisible ? 'none' : 'block';
+        fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
+      });
+    }
+
+    // Reset button
+    const resetButton = document.getElementById('reset-animation');
+    if (resetButton) {
+      resetButton.addEventListener('click', () => {
+        if (this.isAnimating) {
+          this.stop();
+          this.startAnimation();
+        }
+      });
+    }
+
+    // Fullscreen button and keyboard shortcut
     const fullscreenButton = document.querySelector('#fullScreen button');
     if (fullscreenButton) {
       fullscreenButton.addEventListener('click', () => {
         this.uiControls.toggleFullscreen();
       });
     }
+
+    // Keyboard controls
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'f') {
+        this.uiControls.toggleFullscreen();
+      }
+    });
   }
 
   async handleFontDrop(buffer, filename) {
@@ -121,7 +192,6 @@ class SuperShow {
 
   handleFontLoaded(fontData) {
     // This is now just a callback hook if needed
-    // All font processing is done in handleFontDrop
     console.log('Font loaded:', fontData.fontFamily);
   }
 
@@ -132,6 +202,11 @@ class SuperShow {
     const element = document.createElement('span');
     element.className = 'stream-word';
     element.textContent = this.transformCase(word);
+
+    // Apply current color
+    if (this.currentForegroundColor) {
+      element.style.color = this.currentForegroundColor;
+    }
 
     if (font) {
       // Apply font family
@@ -152,6 +227,8 @@ class SuperShow {
         });
         element.style.fontVariationSettings = settings.join(', ');
       }
+
+      return element;
     }
 
     return element;
@@ -239,6 +316,24 @@ class SuperShow {
     if (this.wordStream) {
       this.wordStream.style.transform = `rotate(${this.currentAngle}deg)`;
     }
+  }
+
+  // Update the color handling method
+  updateColors(foregroundColor, backgroundColor) {
+    // Only update the display container background
+    if (this.container) {
+      this.container.style.backgroundColor = backgroundColor;
+    }
+
+    // Update all existing word elements
+    const wordElements = document.querySelectorAll('.stream-word');
+    wordElements.forEach(element => {
+      element.style.color = foregroundColor;
+    });
+
+    // Store current colors for new words
+    this.currentForegroundColor = foregroundColor;
+    this.currentBackgroundColor = backgroundColor;
   }
 }
 
