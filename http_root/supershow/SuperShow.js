@@ -23,10 +23,12 @@ class SuperShow {
     this.wordCreator = new WordCreator();
     this.wordPacker = new WordPacker(this.wordStream);
     this.animationController = new AnimationController(this.wordStream);
+
+    // Initialize UI with callbacks
     this.superUI = new SuperUI({
-      onSpeedChange: this.handleSpeedChange.bind(this),
-      onAngleChange: this.handleAngleChange.bind(this),
-      onColorChange: this.handleColorChange.bind(this)
+      onSpeedChange: (speed) => this.animationController.setSpeed(speed),
+      onAngleChange: (angle) => this.animationController.setAngle(angle),
+      onColorChange: (fg, bg) => this.handleColorChange(fg, bg)
     });
 
     // Font handling
@@ -41,12 +43,18 @@ class SuperShow {
 
     // Initialize system
     this.wordCreator.loadWordList();
+
+    // Debug logging
+    console.log('SuperShow initialized');
   }
 
   async handleFontDrop(buffer, filename) {
     try {
+      console.log('Font dropped:', filename);
+
       // Load the font
       const fontData = await this.fontLoader.loadFont(buffer, filename);
+      console.log('Font loaded:', fontData.fontFamily);
 
       // Add to available fonts
       this.fonts.push(fontData);
@@ -54,6 +62,7 @@ class SuperShow {
 
       // Start animation if this is the first font
       if (this.fonts.length === 1) {
+        console.log('Starting animation');
         this.start();
       }
     } catch (error) {
@@ -63,53 +72,53 @@ class SuperShow {
   }
 
   handleFontLoaded(fontData) {
-    console.log('Font loaded:', fontData.fontFamily);
-  }
-
-  handleSpeedChange(speed) {
-    this.animationController.setSpeed(speed);
-  }
-
-  handleAngleChange(angle) {
-    this.animationController.setAngle(angle);
+    console.log('Font ready:', fontData.fontFamily);
   }
 
   handleColorChange(foreground, background) {
-    this.wordCreator.setColors(foreground, background);
-    this.container.style.backgroundColor = background;
+    // Only apply colors if we have fonts loaded
+    if (this.fonts.length > 0) {
+      this.wordCreator.setColors(foreground, background);
+      if (this.container) {
+        this.container.style.backgroundColor = background;
+      }
+    }
   }
 
   start() {
     if (this.isAnimating) return;
+
+    console.log('Starting animation system');
     this.isAnimating = true;
 
-    // Initialize word packing
+    // Initialize packing system
     this.wordPacker.initialize();
 
-    // Start animation
+    // Start animation with frame callback
     this.animationController.start({
-      onFrame: this.updateFrame.bind(this)
+      onFrame: () => {
+        // Update packing system
+        this.wordPacker.update();
+
+        // Create new words as needed
+        while (this.wordPacker.needsWords()) {
+          const word = this.wordCreator.createWord();
+          if (word) {
+            this.wordPacker.addWord(word);
+          }
+        }
+      }
     });
   }
 
-  updateFrame() {
-    if (!this.isAnimating) return;
-
-    // Let packer manage words and gaps
-    this.wordPacker.update();
-
-    // Create new words as needed
-    while (this.wordPacker.needsWords()) {
-      const word = this.wordCreator.createWord();
-      this.wordPacker.addWord(word);
-    }
-  }
-
   stop() {
+    console.log('Stopping animation system');
     this.isAnimating = false;
     this.animationController.stop();
     this.wordPacker.clear();
-    this.wordStream.innerHTML = '';
+    if (this.wordStream) {
+      this.wordStream.innerHTML = '';
+    }
   }
 }
 
