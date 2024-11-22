@@ -429,12 +429,13 @@ class SuperShow {
     }
   }
 
+  // Animate method
   animate() {
     if (!this.isAnimating) return;
 
-    const angle = this.currentAngle * (Math.PI / 180);
-    const dx = Math.cos(angle) * this.currentSpeed;
-    const dy = Math.sin(angle) * this.currentSpeed;
+    // Always move "right" (along baseline) relative to rotated container
+    const dx = this.currentSpeed;
+    const dy = 0;  // No vertical movement in container space
 
     // Move existing words
     const words = Array.from(this.wordStream.children);
@@ -468,6 +469,16 @@ class SuperShow {
     }
 
     this.animationFrame = requestAnimationFrame(() => this.animate());
+  }
+
+  // Update the updateRotation method to handle the container rotation
+  updateRotation() {
+    if (this.wordStream) {
+      this.wordStream.style.transform = `rotate(${this.currentAngle}deg)`;
+
+      // Update the quadtree bounds when rotation changes
+      this.initQuadtree();
+    }
   }
 
   isOutOfBounds(rect) {
