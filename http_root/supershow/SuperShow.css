@@ -1,9 +1,8 @@
 /* =============================================================================
-   SuperShow.css - Animation system styles
+   SuperShow.css
    ============================================================================= */
 
-   /* Define our color palette */
-  :root {
+   :root {
     --color-red: rgb(255, 0, 0);
     --color-black: rgb(0, 0, 0);
     --color-white: rgb(255, 255, 255);
@@ -14,127 +13,17 @@
     --color-cyan: rgb(0, 255, 255);
   }
 
-   .display-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-  }
-
-  #word-stream {
+  .word-stream {
     position: relative;
     width: 100%;
     height: 100%;
     transform-origin: center center;
-    transition: transform 0.3s ease;
-  }
-
-  .word-stream-line {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 2vw;
-    white-space: nowrap;
     will-change: transform;
   }
 
   .stream-word {
-    font-size: min(8vh, 12vw);
-    white-space: nowrap;
-    opacity: 0.9;
-    transition: opacity 0.3s ease;
-  }
-
-  .stream-word:hover {
-    opacity: 1;
-  }
-
-  @keyframes moveAcross {
-    from {
-      transform: translateX(-100vw);
-    }
-    to {
-      transform: translateX(100vw);
-    }
-  }
-
-  /* Improved controls visibility */
-  #controls {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--white);
-    border-top: 1px solid var(--black);
-    padding: 1rem;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  #controls:hover {
-    opacity: 1;
-  }
-
-  /* Slider improvements */
-  .slider-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 0.5rem 0;
-    padding: 0 1rem;
-  }
-
-  .slider-container input[type="range"] {
-    flex: 1;
-  }
-
-  .slider-container .value {
-    min-width: 4rem;
-    text-align: right;
-  }
-
-  /* Drop zone styling */
-  #drop-text {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.875rem;
-    color: var(--black);
-    pointer-events: none;
+    will-change: transform;
     transition: opacity 0.3s ease;
-  }
-
-  body.dragover #drop-text {
-    opacity: 0.5;
-  }
-
-  /* Font info panel */
-  #font-info {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1001;
-    background: var(--white);
-    border: 1px solid var(--black);
-    border-radius: 4px;
-    padding: 1rem;
-    margin: 1rem;
-    max-height: 80vh;
-    overflow-y: auto;
-    display: none;
-  }
-
-  /* Dragover state for the entire document */
-  body.dragover {
-    background-color: var(--white);
-    opacity: 0.95;
-  }
-
-  /* Fullscreen mode adjustments */
-  :fullscreen .display-container {
-    background: var(--white);
+    white-space: nowrap;
   }
