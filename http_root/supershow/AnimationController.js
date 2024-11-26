@@ -1,5 +1,5 @@
 // =============================================================================
-// AnimationController.js - Movement and animation management
+// AnimationController.js - Optimized animation management
 // =============================================================================
 
 export class AnimationController {
@@ -7,14 +7,11 @@ export class AnimationController {
     this.container = container;
     this.animationFrame = null;
     this.isAnimating = false;
-
-    // Animation state
     this.currentSpeed = 10;
     this.currentAngle = 90;
     this.onFrameCallback = null;
-
-    // Bind methods
-    this.animate = this.animate.bind(this);
+    this.lastFrameTime = 0;
+    this.frameInterval = 1000 / 30;  // Target 30fps instead of 60fps
   }
 
   start({ onFrame }) {
@@ -45,25 +42,31 @@ export class AnimationController {
 
   updateRotation() {
     if (this.container) {
-      this.container.style.transform = `rotate(${this.currentAngle}deg)`;
+      // Use transform3d for hardware acceleration
+      this.container.style.transform = `rotate3d(0,0,1,${this.currentAngle}deg)`;
     }
   }
 
-  animate() {
+  animate(timestamp) {
     if (!this.isAnimating) return;
 
-    // Move along baseline (always "right" relative to container rotation)
-    const dx = this.currentSpeed;
-    const dy = 0;
+    // Throttle frame rate
+    if (timestamp - this.lastFrameTime < this.frameInterval) {
+      this.animationFrame = requestAnimationFrame((t) => this.animate(t));
+      return;
+    }
 
-    // Apply movement to all words
+    this.lastFrameTime = timestamp;
+
+    // Calculate movement based on time delta
+    const dx = (this.currentSpeed / this.frameInterval) * 16; // Normalize speed
+
+    // Update positions using transform3d
     const words = Array.from(this.container.children);
     words.forEach(word => {
       const transform = new WebKitCSSMatrix(window.getComputedStyle(word).transform);
       const newX = transform.e + dx;
-      const newY = transform.f + dy;
-
-      word.style.transform = `translate(${newX}px, ${newY}px)`;
+      word.style.transform = `translate3d(${newX}px, ${transform.f}px, 0)`;
     });
 
     // Call frame callback for word management
@@ -71,20 +74,6 @@ export class AnimationController {
       this.onFrameCallback();
     }
 
-    // Continue animation
-    this.animationFrame = requestAnimationFrame(this.animate);
-  }
-
-  // Helper method to check if an element is visible
-  isInViewport(element) {
-    const rect = element.getBoundingClientRect();
-    const margin = Math.max(window.innerWidth, window.innerHeight);
-
-    return !(
-      rect.right < -margin ||
-      rect.left > window.innerWidth + margin ||
-      rect.bottom < -margin ||
-      rect.top > window.innerHeight + margin
-    );
+    this.animationFrame = requestAnimationFrame((t) => this.animate(t));
   }
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// WordPacker.js - Box-based word packing system
+// WordPacker.js - Optimized word packing system
 // =============================================================================
 
 export class WordPacker {
@@ -8,17 +8,21 @@ export class WordPacker {
     this.boxes = new Map();  // word element -> bounding box
 
     // Configuration
-    this.margin = 10;        // pixels between words
-    this.maxWords = 200;     // maximum words on screen
-    this.scanInterval = 16;  // ms between space scans
+    this.margin = 20;        // pixels between words
+    this.maxWords = 100;     // reduced from 200 for better performance
+    this.scanInterval = 100; // increased from 16ms for better performance
     this.lastScanTime = 0;
-    this.viewportPadding = 200;  // pixels outside viewport
+    this.viewportPadding = window.innerWidth / 2;  // reduced padding for better performance
+
+    // Performance monitoring
+    this.lastPerformanceLog = 0;
+    this.performanceInterval = 1000; // Log performance every second
   }
 
   initialize() {
+    console.log('Initializing WordPacker');
     this.clear();
-    this.boxes.clear();
-    this.placeInitialWords();
+    this.initializeViewportBounds();
   }
 
   clear() {
@@ -26,46 +30,22 @@ export class WordPacker {
     this.container.innerHTML = '';
   }
 
-  needsWords() {
-    return this.boxes.size < this.maxWords;
-  }
+  initializeViewportBounds() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-  getExtendedViewportBounds() {
-    return {
+    this.viewportBounds = {
       left: -this.viewportPadding,
-      top: -this.viewportPadding,
-      right: window.innerWidth + this.viewportPadding,
-      bottom: window.innerHeight + this.viewportPadding,
-      width: window.innerWidth + this.viewportPadding * 2,
-      height: window.innerHeight + this.viewportPadding * 2
+      right: width + this.viewportPadding,
+      top: 0,
+      bottom: height,
+      width: width + (this.viewportPadding * 2),
+      height: height
     };
   }
 
-  placeInitialWords() {
-    const bounds = this.getExtendedViewportBounds();
-    const initialCount = Math.min(20, this.maxWords);
-
-    // Create placeholder boxes for initial placement
-    const initialBoxes = Array.from({ length: initialCount }, () => ({
-      width: 100 + Math.random() * 200,   // Approximate word sizes
-      height: 30 + Math.random() * 50,
-      placed: false
-    }));
-
-    // Try to place each box
-    initialBoxes.forEach(box => {
-      for (let attempts = 0; attempts < 50 && !box.placed; attempts++) {
-        box.x = bounds.left + Math.random() * bounds.width;
-        box.y = bounds.top + Math.random() * bounds.height;
-
-        if (!this.checkCollisions(box)) {
-          box.placed = true;
-        }
-      }
-    });
-
-    // Store successfully placed boxes
-    this.initialBoxes = initialBoxes.filter(box => box.placed);
+  needsWords() {
+    return this.boxes.size < this.maxWords;
   }
 
   addWord(wordElement) {
@@ -85,102 +65,106 @@ export class WordPacker {
   }
 
   measureWord(wordElement) {
+    // Measure word size efficiently
     const tempDiv = wordElement.cloneNode(true);
+    tempDiv.style.visibility = 'hidden';
+    tempDiv.style.position = 'absolute';
     document.body.appendChild(tempDiv);
     const rect = tempDiv.getBoundingClientRect();
     document.body.removeChild(tempDiv);
 
     return {
-      width: rect.width + this.margin * 2,
-      height: rect.height + this.margin * 2,
+      width: rect.width + (this.margin * 2),
+      height: rect.height + (this.margin * 2),
       element: wordElement
     };
   }
 
   findSpaceForWord(box) {
-    const bounds = this.getExtendedViewportBounds();
+    // Try to place word at entry edge first
+    const entryX = this.viewportBounds.left;
+    const maxAttempts = 10;  // Reduced attempts for better performance
 
-    // Try initial placement at entry edge
-    for (let attempts = 0; attempts < 50; attempts++) {
-      const x = bounds.left;
-      const y = bounds.top + Math.random() * bounds.height;
+    for (let i = 0; i < maxAttempts; i++) {
+      const y = Math.random() * (this.viewportBounds.height - box.height);
+      const testPosition = { x: entryX, y };
 
-      const testBox = { ...box, x, y };
-      if (!this.checkCollisions(testBox)) {
-        return { x, y };
-      }
-    }
-
-    // If entry edge is full, try filling gaps
-    return this.findGapForWord(box);
-  }
-
-  findGapForWord(box) {
-    const bounds = this.getExtendedViewportBounds();
-    const gridSize = 100;  // Size of grid to check for spaces
-
-    for (let x = bounds.left; x < bounds.right; x += gridSize) {
-      for (let y = bounds.top; y < bounds.bottom; y += gridSize) {
-        const testBox = { ...box, x, y };
-        if (!this.checkCollisions(testBox)) {
-          return { x, y };
-        }
+      if (!this.checkCollisionsAt(box, testPosition)) {
+        return testPosition;
       }
     }
 
     return null;
   }
 
-  checkCollisions(newBox) {
-    for (const box of this.boxes.values()) {
-      if (this.boxesIntersect(newBox, box)) {
+  checkCollisionsAt(box, position) {
+    const testBox = {
+      left: position.x,
+      right: position.x + box.width,
+      top: position.y,
+      bottom: position.y + box.height
+    };
+
+    for (const existingBox of this.boxes.values()) {
+      if (this.boxesIntersect(testBox, existingBox)) {
         return true;
       }
     }
+
     return false;
   }
 
   boxesIntersect(a, b) {
     return !(
-      a.x + a.width < b.x - this.margin ||
-      a.x > b.x + b.width + this.margin ||
-      a.y + a.height < b.y - this.margin ||
-      a.y > b.y + b.height + this.margin
+      a.right < b.left ||
+      a.left > b.right ||
+      a.bottom < b.top ||
+      a.top > b.bottom
     );
   }
 
   placeWord(wordElement, box) {
     wordElement.style.transform = `translate(${box.x}px, ${box.y}px)`;
     this.container.appendChild(wordElement);
-    this.boxes.set(wordElement, box);
+    this.boxes.set(wordElement, {
+      left: box.x,
+      right: box.x + box.width,
+      top: box.y,
+      bottom: box.y + box.height,
+      element: wordElement
+    });
   }
 
   update() {
     const now = performance.now();
+
+    // Only update at specified interval
     if (now - this.lastScanTime < this.scanInterval) return;
     this.lastScanTime = now;
 
-    // Remove words that have moved out of bounds
-    this.removeOutOfBoundsWords();
-
-    // Update positions of remaining words
-    for (const [element, box] of this.boxes.entries()) {
-      const transform = new WebKitCSSMatrix(window.getComputedStyle(element).transform);
-      box.x = transform.e;
-      box.y = transform.f;
+    // Log performance if needed
+    if (now - this.lastPerformanceLog > this.performanceInterval) {
+      console.log(`WordPacker stats: ${this.boxes.size} words active`);
+      this.lastPerformanceLog = now;
     }
+
+    // Remove out-of-bounds words
+    this.removeOutOfBoundsWords();
   }
 
   removeOutOfBoundsWords() {
-    const bounds = this.getExtendedViewportBounds();
-
     for (const [element, box] of this.boxes.entries()) {
-      if (box.x + box.width < bounds.left ||
-          box.x > bounds.right ||
-          box.y + box.height < bounds.top ||
-          box.y > bounds.bottom) {
+      const transform = new WebKitCSSMatrix(window.getComputedStyle(element).transform);
+      const currentX = transform.e;
+
+      // Only check x position for performance
+      if (currentX > this.viewportBounds.right) {
         element.remove();
         this.boxes.delete(element);
+      } else {
+        // Update box position
+        box.left = currentX;
+        box.right = currentX + (box.right - box.left);
       }
     }
   }
