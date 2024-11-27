@@ -5,42 +5,73 @@
 import { FontLoader } from '../core/FontLoader.js';
 import { DragAndDrop } from '../shared/DragAndDrop.js';
 import { UIControls } from '../shared/UIControls.js';
+import { AnimationController } from './AnimationController.js';
+import { WordCreator } from './WordCreator.js';
+import { WordPacker } from './WordPacker.js';
+import { SuperUI } from './SuperUI.js';
 
 class SuperShow {
+  // =========================================================================
+  // Initialization
+  // =========================================================================
+
   constructor() {
-    // Core state
+    this.initializeState();
+    this.initializeConfiguration();
+    this.initializeViewport();
+    this.initializeComponents();
+    this.initializeEventListeners();
+    this.loadWordList();
+  }
+
+  initializeState() {
     this.fonts = [];
     this.words = [];
     this.isAnimating = false;
+    this.animationFrame = null;
+    this.wordBubbles = [];
+    this.currentLine = { y: 0, height: 0, xOffset: 0 };
+  }
 
-    // Configuration
+  initializeConfiguration() {
     this.minFontSize = 1.5;
     this.maxFontSize = 10;
     this.wordInterval = 50;
     this.lastWordTime = 0;
     this.margin = 5;
+    this.bubblePadding = 5;
+  }
 
-    // Viewport and grid configuration
+  initializeViewport() {
     this.viewportWidth = window.innerWidth;
     this.viewportHeight = window.innerHeight;
     this.gridCells = 20;
     this.cellHeight = this.viewportHeight / this.gridCells;
+  }
 
-    // Bubble tracking
-    this.wordBubbles = [];
-    this.bubblePadding = 10;
-
-    // Text measurement
-    this.measuringCanvas = document.createElement('canvas');
-    this.ctx = this.measuringCanvas.getContext('2d');
-
+  initializeComponents() {
     // DOM elements
     this.container = document.querySelector('.display-container');
     this.wordStream = document.getElementById('word-stream');
 
-    // Initialize components
+    // Canvas setup
+    this.measuringCanvas = document.createElement('canvas');
+    this.ctx = this.measuringCanvas.getContext('2d');
+
+    // Initialize animation controller
+    this.animationController = new AnimationController(this.wordStream);
+
+    // Initialize UI
+    this.ui = new SuperUI({
+      onSpeedChange: (speed) => this.animationController.setSpeed(speed),
+      onAngleChange: (angle) => this.animationController.setAngle(angle),
+      onColorChange: (fg, bg) => this.setColors(fg, bg)
+    });
+
+    // Initialize controls
     this.uiControls = new UIControls();
 
+    // Initialize font handling
     this.fontLoader = new FontLoader({
       onFontLoaded: this.handleFontLoaded.bind(this)
     });
@@ -49,20 +80,19 @@ class SuperShow {
       dropZone: document.body,
       onDrop: this.handleFontDrop.bind(this)
     });
+  }
 
-    // Set up resize handler
+  initializeEventListeners() {
     window.addEventListener('resize', () => {
       this.viewportWidth = window.innerWidth;
       this.viewportHeight = window.innerHeight;
       this.cellHeight = this.viewportHeight / this.gridCells;
     });
-
-    // Animation frame
-    this.animationFrame = null;
-
-    // Load words
-    this.loadWordList();
   }
+
+  // =========================================================================
+  // Word List Management
+  // =========================================================================
 
   async loadWordList() {
     try {
@@ -75,12 +105,13 @@ class SuperShow {
     }
   }
 
+  // =========================================================================
+  // Word Creation and Measurement
+  // =========================================================================
+
   measureWord(text, fontFamily, fontSize) {
-    // Set up canvas for measurement
     this.ctx.font = `${fontSize}vh ${fontFamily}`;
     const metrics = this.ctx.measureText(text);
-
-    // Get the full height including ascenders and descenders
     const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
     return {
@@ -90,164 +121,6 @@ class SuperShow {
     };
   }
 
-  findNextPosition(wordWidth, wordHeight, baseline) {
-    const containerHeight = this.wordStream.offsetHeight;
-    const containerWidth = this.wordStream.offsetWidth;
-
-    // If current line is too full, start a new line
-    if (this.currentLine.xOffset + wordWidth + this.margin > containerWidth) {
-      this.currentLine.y += this.currentLine.height + this.margin;
-      this.currentLine.xOffset = 0;
-      this.currentLine.height = 0;
-
-      // If we've filled the container height, reset to top
-      if (this.currentLine.y > containerHeight) {
-        this.currentLine.y = 0;
-      }
-    }
-
-    // Store current position
-    const position = {
-      x: this.currentLine.xOffset,
-      y: this.currentLine.y + baseline
-    };
-
-    // Update line tracking
-    this.currentLine.xOffset += wordWidth + this.margin;
-    this.currentLine.height = Math.max(this.currentLine.height, wordHeight);
-
-    return position;
-  }
-
-  createWord() {
-    const word = this.words[Math.floor(Math.random() * this.words.length)];
-    const font = this.fonts[Math.floor(Math.random() * this.fonts.length)];
-
-    // Create element
-    const element = document.createElement('div');
-    element.className = 'stream-word';
-    element.textContent = this.transformCase(word);
-
-    // Determine size
-    const sizeRand = Math.random();
-    let fontSize;
-    if (sizeRand < 0.4) {       // 40% very small
-      fontSize = this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.2;
-    } else if (sizeRand < 0.7) { // 30% small
-      fontSize = this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.4;
-    } else if (sizeRand < 0.9) { // 20% medium
-      fontSize = this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.6;
-    } else {                    // 10% large
-      fontSize = this.maxFontSize;
-    }
-
-    element.style.fontSize = `${fontSize}vh`;
-    element.style.fontFamily = `"${font.fontFamily}"`;
-
-    if (this.foregroundColor) {
-      element.style.color = this.foregroundColor;
-    }
-
-    // Measure the word's dimensions
-    const metrics = this.measureWord(element.textContent, font.fontFamily, fontSize);
-
-    // Find position for the word
-    const position = this.findAvailablePosition(metrics);
-    if (position) {
-      element.style.setProperty('--y', `${position.y}vh`);
-
-      // Create and store bubble
-      const bubble = {
-        x: position.x,
-        y: position.y * (this.viewportHeight / 100),  // Convert vh to pixels
-        width: metrics.width + (this.bubblePadding * 2),
-        height: metrics.height + (this.bubblePadding * 2),
-        element: element
-      };
-
-      this.wordBubbles.push(bubble);
-
-      // Remove bubble after animation
-      element.addEventListener('animationend', () => {
-        const index = this.wordBubbles.findIndex(b => b.element === element);
-        if (index !== -1) {
-          this.wordBubbles.splice(index, 1);
-        }
-        element.remove();
-      }, { once: true });
-    }
-
-    return element;
-  }
-
-  findAvailablePosition(metrics) {
-    const bubbleWidth = metrics.width + (this.bubblePadding * 2);
-    const bubbleHeight = metrics.height + (this.bubblePadding * 2);
-
-    // Try positions through the grid
-    for (let attempts = 0; attempts < 50; attempts++) {
-      // Try random position
-      const y = Math.random() * 100;  // Full viewport height in vh units
-      const x = this.viewportWidth;   // Start at right edge
-
-      // Check for collisions
-      const hasCollision = this.wordBubbles.some(bubble => {
-        return this.checkBubbleCollision(
-          { x, y: y * (this.viewportHeight / 100), width: bubbleWidth, height: bubbleHeight },
-          bubble
-        );
-      });
-
-      if (!hasCollision) {
-        return { x, y };
-      }
-    }
-
-    return null;
-  }
-
-  checkBubbleCollision(bubble1, bubble2) {
-    return !(
-      bubble1.x + bubble1.width < bubble2.x - this.bubblePadding ||
-      bubble1.x - this.bubblePadding > bubble2.x + bubble2.width ||
-      bubble1.y + bubble1.height < bubble2.y - this.bubblePadding ||
-      bubble1.y - this.bubblePadding > bubble2.y + bubble2.height
-    );
-  }
-
-
-  update(timestamp) {
-    if (!this.isAnimating) return;
-
-    // Update bubble positions based on animation
-    this.wordBubbles.forEach(bubble => {
-      const transform = new WebKitCSSMatrix(window.getComputedStyle(bubble.element).transform);
-      bubble.x = transform.e;
-    });
-
-    // Create new words if needed
-    if (timestamp - this.lastWordTime > this.wordInterval) {
-      const word = this.createWord();
-      if (word) {
-        this.wordStream.appendChild(word);
-        this.lastWordTime = timestamp;
-      }
-    }
-
-    this.animationFrame = requestAnimationFrame(this.update.bind(this));
-  }
-
-  cleanupOccupiedSpaces() {
-    // Remove any spaces that are no longer needed
-    const now = Date.now();
-    this.occupiedSpaces.forEach(pos => {
-      const rect = document.elementFromPoint(window.innerWidth - 10, pos * window.innerHeight / 100);
-      if (!rect || !rect.classList.contains('stream-word')) {
-        this.occupiedSpaces.delete(pos);
-      }
-    });
-  }
-
   transformCase(word) {
     const random = Math.random();
     if (random < 0.1) return word.toUpperCase();
@@ -255,25 +128,149 @@ class SuperShow {
     return word;
   }
 
-  start() {
-    if (this.isAnimating) return;
-    this.isAnimating = true;
-    this.lastWordTime = 0;
-    this.currentLine = { y: 0, height: 0, xOffset: 0 };  // Reset line tracking
-    this.update();
+  createWord() {
+    const word = this.words[Math.floor(Math.random() * this.words.length)];
+    const font = this.fonts[Math.floor(Math.random() * this.fonts.length)];
+
+    const element = document.createElement('div');
+    element.className = 'stream-word';
+    element.textContent = this.transformCase(word);
+
+    const fontSize = this.calculateFontSize();
+    element.style.fontSize = `${fontSize}vh`;
+    element.style.fontFamily = `"${font.fontFamily}"`;
+
+    if (this.foregroundColor) {
+      element.style.color = this.foregroundColor;
+    }
+
+    const metrics = this.measureWord(element.textContent, font.fontFamily, fontSize);
+    const position = this.findAvailablePosition(metrics);
+
+    if (position) {
+      element.style.setProperty('--y', `${position.y}vh`);
+      const bubble = this.createBubble(element, position, metrics);
+      this.setupBubbleCleanup(element, bubble);
+      return element;
+    }
+
+    return null;
   }
 
-  stop() {
-    this.isAnimating = false;
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = null;
+  calculateFontSize() {
+    const sizeRand = Math.random();
+    if (sizeRand < 0.4) {
+      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.2;
+    } else if (sizeRand < 0.7) {
+      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.4;
+    } else if (sizeRand < 0.9) {
+      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.6;
     }
-    if (this.wordStream) {
-      this.wordStream.innerHTML = '';
-    }
-    this.currentLine = { y: 0, height: 0, xOffset: 0 };  // Reset line tracking
+    return this.maxFontSize;
   }
+
+  // =========================================================================
+  // Position Management
+  // =========================================================================
+
+  findNextPosition(wordWidth, wordHeight, baseline) {
+    const containerHeight = this.wordStream.offsetHeight;
+    const containerWidth = this.wordStream.offsetWidth;
+
+    if (this.currentLine.xOffset + wordWidth + this.margin > containerWidth) {
+      this.currentLine.y += this.currentLine.height + this.margin;
+      this.currentLine.xOffset = 0;
+      this.currentLine.height = 0;
+
+      if (this.currentLine.y > containerHeight) {
+        this.currentLine.y = 0;
+      }
+    }
+
+    const position = {
+      x: this.currentLine.xOffset,
+      y: this.currentLine.y + baseline
+    };
+
+    this.currentLine.xOffset += wordWidth + this.margin;
+    this.currentLine.height = Math.max(this.currentLine.height, wordHeight);
+
+    return position;
+  }
+
+  findAvailablePosition(metrics) {
+    const bubbleWidth = metrics.width + (this.bubblePadding * 2);
+    const bubbleHeight = metrics.height + (this.bubblePadding * 2);
+    const bubbleHeightVh = (bubbleHeight / this.viewportHeight) * 100;
+
+    const numRows = 20;
+    const rowHeight = 100 / numRows;  // Use full viewport height instead of 90%
+
+    for (let attempts = 0; attempts < 50; attempts++) {
+      const row = Math.floor(Math.random() * numRows);
+      const baseY = row * rowHeight;
+      const yOffset = Math.random() * (rowHeight - bubbleHeightVh);
+      const y = baseY + yOffset;
+
+      const hasCollision = this.checkCollisions(y, bubbleHeightVh);
+      if (!hasCollision) {
+        return { x: this.viewportWidth, y };
+      }
+    }
+
+    return { x: this.viewportWidth, y: Math.random() * 100 };  // Use full range for fallback
+  }
+
+  checkCollisions(y, bubbleHeightVh) {
+    return this.wordBubbles.some(bubble => {
+      const timeDiff = performance.now() - bubble.startTime;
+      if (timeDiff > 2000) return false;
+      return Math.abs(y - bubble.y) < bubbleHeightVh;
+    });
+  }
+
+  checkBubbleCollision(bubble1, bubble2) {
+    const margin = this.bubblePadding * 2;
+    return !(
+      bubble1.x + bubble1.width < bubble2.x - margin ||
+      bubble1.x - margin > bubble2.x + bubble2.width ||
+      bubble1.y + bubble1.height < bubble2.y - margin ||
+      bubble1.y - margin > bubble2.y + bubble2.height
+    );
+  }
+
+  // =========================================================================
+  // Animation and Updates
+  // =========================================================================
+
+  update(timestamp) {
+    if (!this.isAnimating) return;
+
+    this.updateBubblePositions();
+    this.createNewWordsIfNeeded(timestamp);
+    this.animationFrame = requestAnimationFrame(this.update.bind(this));
+  }
+
+  updateBubblePositions() {
+    this.wordBubbles.forEach(bubble => {
+      const transform = new WebKitCSSMatrix(window.getComputedStyle(bubble.element).transform);
+      bubble.x = transform.e;
+    });
+  }
+
+  createNewWordsIfNeeded(timestamp) {
+    if (timestamp - this.lastWordTime > this.wordInterval) {
+      const word = this.createWord();
+      if (word) {
+        this.wordStream.appendChild(word);
+        this.lastWordTime = timestamp;
+      }
+    }
+  }
+
+  // =========================================================================
+  // Font Management
+  // =========================================================================
 
   async handleFontDrop(buffer, filename) {
     try {
@@ -293,16 +290,73 @@ class SuperShow {
     console.log('Font loaded:', fontData.fontFamily);
   }
 
+  // =========================================================================
+  // Control Methods
+  // =========================================================================
+
+  start() {
+    if (this.isAnimating) return;
+    this.isAnimating = true;
+    this.lastWordTime = 0;
+    this.currentLine = { y: 0, height: 0, xOffset: 0 };
+    this.update();
+  }
+
+  stop() {
+    this.isAnimating = false;
+    if (this.animationFrame) {
+      cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
+    if (this.wordStream) {
+      this.wordStream.innerHTML = '';
+    }
+    this.currentLine = { y: 0, height: 0, xOffset: 0 };
+  }
+
   setColors(foreground, background) {
     this.foregroundColor = foreground;
     if (this.container) {
       this.container.style.backgroundColor = background;
     }
-    // Update existing words
     const words = this.wordStream.querySelectorAll('.stream-word');
     words.forEach(word => {
       word.style.color = foreground;
     });
+  }
+
+  // =========================================================================
+  // Utility Methods
+  // =========================================================================
+
+  createBubble(element, position, metrics) {
+    const bubble = {
+      x: position.x,
+      y: position.y,
+      width: metrics.width + (this.bubblePadding * 2),
+      height: metrics.height + (this.bubblePadding * 2),
+      element: element,
+      startTime: performance.now()
+    };
+    this.wordBubbles.push(bubble);
+    return bubble;
+  }
+
+  setupBubbleCleanup(element, bubble) {
+    element.addEventListener('animationend', () => {
+      const index = this.wordBubbles.findIndex(b => b.element === element);
+      if (index !== -1) {
+        this.wordBubbles.splice(index, 1);
+      }
+      element.remove();
+    }, { once: true });
+  }
+
+  cleanupOccupiedSpaces() {
+    const now = Date.now();
+    this.wordBubbles = this.wordBubbles.filter(bubble =>
+      performance.now() - bubble.startTime < 15000
+    );
   }
 }
 

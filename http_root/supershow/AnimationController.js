@@ -8,7 +8,7 @@ export class AnimationController {
     this.animationFrame = null;
     this.isAnimating = false;
     this.currentSpeed = 10;
-    this.currentAngle = 90;
+    this.currentAngle = 0;  // Changed default to 0
     this.onFrameCallback = null;
     this.lastFrameTime = 0;
     this.frameInterval = 1000 / 30;  // Target 30fps instead of 60fps

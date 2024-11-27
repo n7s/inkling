@@ -17,6 +17,59 @@
 /* Animation Container */
 .display-container {
   position: fixed;
+  top: -50vh;  /* Move up by half viewport height */
+  left: 0;
+  right: 0;
+  bottom: -50vh;  /* Extend bottom by half viewport height */
+  overflow: hidden;
+  background-color: var(--white);
+}
+
+/* Word Stream Container */
+.word-stream {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: center top;  /* Change from center center to center top */
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* Individual Words */
+.stream-word {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
+  animation: moveAcross 15s linear forwards;
+  transform: translateY(-50vh); /* Move the origin point up by half viewport height */
+}
+
+@keyframes moveAcross {
+  0% {
+    opacity: 0;
+    transform: translate(100vw, var(--y, 0)) translateY(-50vh);
+  }
+  2% {
+    opacity: 1;
+    transform: translate(95vw, var(--y, 0)) translateY(-50vh);
+  }
+  98% {
+    opacity: 1;
+    transform: translate(-95vw, var(--y, 0)) translateY(-50vh);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-100vw, var(--y, 0)) translateY(-50vh);
+  }
+}
+
+/* Animation Container */
+.display-container {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -209,69 +262,4 @@
   .slider-container .slider-label {
     min-width: auto;
   }
-}
-
-
-
-
-
-
-
-
-
-
-/* =============================================================================
-   SuperShow.css - Improved animation and positioning
-   ============================================================================= */
-
-   .word-stream {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-origin: center center;
-    will-change: transform;
-    overflow: hidden;
-}
-
-.stream-word {
-    position: absolute;
-    left: 0;
-    white-space: nowrap;
-    will-change: transform;
-    opacity: 0;
-    animation: moveAcross 15s linear forwards;
-    transform-origin: left center;
-    pointer-events: none;
-    /* Optimize rendering */
-    -webkit-font-smoothing: antialiased;
-    backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-}
-
-@keyframes moveAcross {
-    0% {
-        opacity: 0;
-        transform: translate(100vw, var(--y, 0));
-    }
-    2% {
-        opacity: 1;
-        transform: translate(95vw, var(--y, 0));
-    }
-    98% {
-        opacity: 1;
-        transform: translate(-95vw, var(--y, 0));
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-100vw, var(--y, 0));
-    }
-}
-
-/* Ensure hardware acceleration for container */
-.display-container {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-    overflow: hidden;
 }
