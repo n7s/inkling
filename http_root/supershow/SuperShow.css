@@ -17,20 +17,24 @@
 /* Animation Container */
 .display-container {
   position: fixed;
-  top: -50vh;  /* Move up by half viewport height */
-  left: 0;
-  right: 0;
-  bottom: -50vh;  /* Extend bottom by half viewport height */
+  top: -50vh;
+  left: -50vw;
+  right: -50vw;
+  bottom: -50vh;
   overflow: hidden;
   background-color: var(--white);
 }
 
 /* Word Stream Container */
 .word-stream {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-origin: center top;  /* Change from center center to center top */
+  position: absolute;
+  /* Calculate size using pythagoras: √2 * (100% + 2 * safety margin) */
+  width: 200vw;    /* Back to smaller but still enough for rotation */
+  height: 200vh;
+  /* Center it */
+  left: -50vw;
+  top: -50vh;
+  transform-origin: center center;
   will-change: transform;
   overflow: hidden;
 }
@@ -45,13 +49,13 @@
   -webkit-font-smoothing: antialiased;
   backface-visibility: hidden;
   animation: moveAcross 15s linear forwards;
-  transform: translateY(-50vh); /* Move the origin point up by half viewport height */
+  transform: translateY(-50vh);
 }
 
 @keyframes moveAcross {
   0% {
     opacity: 0;
-    transform: translate(100vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(100vw, var(--y, 0)) translateY(-50vh);  /* Back to original distance */
   }
   2% {
     opacity: 1;
@@ -65,39 +69,6 @@
     opacity: 0;
     transform: translate(-100vw, var(--y, 0)) translateY(-50vh);
   }
-}
-
-/* Animation Container */
-.display-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  background-color: var(--white);
-}
-
-/* Word Stream Container */
-.word-stream {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* Individual Words */
-.stream-word {
-  position: absolute;
-  white-space: nowrap;
-  will-change: transform;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  /* Optimize GPU rendering */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* Drop Zone */

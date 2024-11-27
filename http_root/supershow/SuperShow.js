@@ -203,14 +203,14 @@ class SuperShow {
     const bubbleHeight = metrics.height + (this.bubblePadding * 2);
     const bubbleHeightVh = (bubbleHeight / this.viewportHeight) * 100;
 
-    const numRows = 20;
-    const rowHeight = 100 / numRows;  // Use full viewport height instead of 90%
+    // Extend vertical range to cover rotated corners
+    const minY = -100; // Allow placement 100vh above viewport
+    const maxY = 200;  // Allow placement 200vh below viewport
+    const range = maxY - minY;
 
     for (let attempts = 0; attempts < 50; attempts++) {
-      const row = Math.floor(Math.random() * numRows);
-      const baseY = row * rowHeight;
-      const yOffset = Math.random() * (rowHeight - bubbleHeightVh);
-      const y = baseY + yOffset;
+      // Generate position across extended range
+      const y = minY + (Math.random() * range);
 
       const hasCollision = this.checkCollisions(y, bubbleHeightVh);
       if (!hasCollision) {
@@ -218,7 +218,8 @@ class SuperShow {
       }
     }
 
-    return { x: this.viewportWidth, y: Math.random() * 100 };  // Use full range for fallback
+    // Fallback position also uses extended range
+    return { x: this.viewportWidth, y: minY + (Math.random() * range) };
   }
 
   checkCollisions(y, bubbleHeightVh) {
