@@ -12,6 +12,7 @@
   --color-yellow: rgb(255, 255, 0);
   --color-pink: rgb(255, 0, 255);
   --color-cyan: rgb(0, 255, 255);
+  --animation-duration: 15s;
 }
 
 /* Animation Container */
@@ -48,26 +49,26 @@
   pointer-events: none;
   -webkit-font-smoothing: antialiased;
   backface-visibility: hidden;
-  animation: moveAcross 15s linear forwards;
+  animation: moveAcross var(--animation-duration) linear forwards;
   transform: translateY(-50vh);
 }
 
 @keyframes moveAcross {
   0% {
     opacity: 0;
-    transform: translate(100vw, var(--y, 0)) translateY(-50vh);  /* Back to original distance */
+    transform: translate(-100vw, var(--y, 0)) translateY(-50vh);
   }
   2% {
     opacity: 1;
-    transform: translate(95vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(-95vw, var(--y, 0)) translateY(-50vh);
   }
   98% {
     opacity: 1;
-    transform: translate(-95vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(95vw, var(--y, 0)) translateY(-50vh);
   }
   100% {
     opacity: 0;
-    transform: translate(-100vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(100vw, var(--y, 0)) translateY(-50vh);
   }
 }
 

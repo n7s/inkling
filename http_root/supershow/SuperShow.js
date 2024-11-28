@@ -61,9 +61,14 @@ class SuperShow {
     // Initialize animation controller
     this.animationController = new AnimationController(this.wordStream);
 
-    // Initialize UI
+    // Initialize UI with proper speed handling
     this.ui = new SuperUI({
-      onSpeedChange: (speed) => this.animationController.setSpeed(speed),
+      onSpeedChange: (speed) => {
+        // Convert speed slider value (1-1000) to animation duration
+        // Map 1 to 30s (slowest) and 1000 to 1s (fastest)
+        const duration = 30 - ((speed - 1) / (1000 - 1)) * (30 - 1);
+        document.documentElement.style.setProperty('--animation-duration', `${duration}s`);
+      },
       onAngleChange: (angle) => this.animationController.setAngle(angle),
       onColorChange: (fg, bg) => this.setColors(fg, bg)
     });
