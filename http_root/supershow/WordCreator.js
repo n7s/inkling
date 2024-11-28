@@ -6,7 +6,7 @@ import { OpenTypeFeatures } from '../wordmaster/OpenTypeFeatures.js';
 
 export class WordCreator {
   constructor() {
-    this.words = [];
+    this.words = ['Typography']; // Default word to use until list is loaded
     this.fonts = [];
     this.foregroundColor = null;
     this.backgroundColor = null;
@@ -21,13 +21,86 @@ export class WordCreator {
       capitalize: 0.3,   // 20% additional chance
       lowercase: 0.6     // remaining 70%
     };
+
+    // Define variable font axis defaults and ranges
+    this.variableAxes = {
+      'wdth': { normal: 100, min: 88, max: 113 },     // Match font's actual range
+      'wght': { normal: 400, min: 360, max: 900 },    // Match font's actual range
+      'opsz': { normal: 12, min: 5, max: 1200 }       // Match font's actual range
+    };
+  }
+
+  // Box-Muller transform for generating normally distributed random numbers
+  gaussianRandom() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+    while(v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  }
+
+  // Map gaussian random number to a range with normal value as center
+  mapGaussianToRange(normal, min, max) {
+    // Get a random number from normal distribution (mostly between -3 and 3)
+    const gaussian = this.gaussianRandom();
+
+    // Determine which side of normal we're on
+    if (gaussian > 0) {
+      // Map positive gaussian to range between normal and max
+      return normal + (gaussian / 3) * (max - normal);
+    } else {
+      // Map negative gaussian to range between min and normal
+      return normal + (gaussian / 3) * (normal - min);
+    }
+  }
+
+  // Get random variation settings for a font
+  getRandomVariationSettings(font) {
+    if (!font.axes || font.axes.length === 0) {
+      console.log('No axes available for font:', font.fontFamily);
+      return '';
+    }
+
+    const settings = [];
+    console.log('Getting variation settings for axes:', font.axes);
+
+    for (const axis of font.axes) {
+      const axisConfig = this.variableAxes[axis.tag];
+      if (axisConfig) {
+        // Get normally distributed value for this axis
+        let value = this.mapGaussianToRange(
+          axisConfig.normal,
+          Math.max(axis.min, axisConfig.min),
+          Math.min(axis.max, axisConfig.max)
+        );
+
+        // Clamp value to axis bounds
+        value = Math.max(axis.min, Math.min(axis.max, value));
+
+        // Round to 2 decimal places
+        value = Math.round(value * 100) / 100;
+
+        settings.push(`"${axis.tag}" ${value}`);
+        console.log(`Generated setting for ${axis.tag}:`, value);
+      }
+    }
+
+    const result = settings.join(', ');
+    console.log('Final variation settings:', result);
+    return result;
   }
 
   async loadWordList() {
     try {
       const response = await fetch('../word_lists/euro_words.txt');
       const text = await response.text();
-      this.words = text.split('\n').filter(word => word.trim());
+      const words = text.split('\n').filter(word => word.trim());
+      if (words.length > 0) {
+        this.words = words;
+        console.log(`Loaded ${words.length} words`);
+      } else {
+        console.warn('Word list was empty, using default words');
+        this.words = ['Typography', 'Design', 'Letters', 'Words'];
+      }
     } catch (error) {
       console.error('Error loading word list:', error);
       this.words = ['Typography', 'Design', 'Letters', 'Words'];
@@ -35,18 +108,30 @@ export class WordCreator {
   }
 
   addFont(fontData) {
+    console.log('Adding font with data:', fontData);
+
     // Extract OpenType features
     const features = new OpenTypeFeatures();
     const availableFeatures = features.extractFeatures(fontData.fontInfo);
 
-    // Create complete font object with features
+    // Get axes from fontInfo
+    const axes = fontData.fontInfo.axes || [];
+    console.log('Font axes from fontInfo:', axes);
+
+    // Create complete font object with features and axes
     const font = {
       ...fontData,
       features: Array.from(availableFeatures).filter(f =>
-        f === 'smcp' || f.startsWith('ss')  // Only keep small caps and stylistic sets
+        f === 'smcp' || f.startsWith('ss')
       ),
-      axes: fontData.fontInfo.axes || []
+      axes: axes
     };
+
+    console.log('Created font object with axes:', {
+      fontFamily: font.fontFamily,
+      axesCount: font.axes.length,
+      axes: font.axes
+    });
 
     this.fonts.push(font);
   }
@@ -69,10 +154,21 @@ export class WordCreator {
     this.applyColor(element);
     this.applyRandomFont(element);
 
+    // Debug log to verify settings
+    console.log('Created word:', {
+      text: element.textContent,
+      fontFamily: element.style.fontFamily,
+      variationSettings: element.style.fontVariationSettings
+    });
+
     return element;
   }
 
   getRandomWord() {
+    if (!this.words || this.words.length === 0) {
+      console.warn('No words available, using fallback');
+      return 'Typography';
+    }
     return this.words[Math.floor(Math.random() * this.words.length)];
   }
 
@@ -101,9 +197,24 @@ export class WordCreator {
     if (this.fonts.length === 0) return;
 
     const font = this.fonts[Math.floor(Math.random() * this.fonts.length)];
+    console.log('Applying font:', {
+      family: font.fontFamily,
+      hasAxes: !!font.axes,
+      axesCount: font.axes?.length
+    });
 
     // Apply font family
     element.style.fontFamily = `"${font.fontFamily}"`;
+
+    // Apply variable font settings if available
+    const variationSettings = this.getRandomVariationSettings(font);
+    if (variationSettings) {
+      element.style.fontVariationSettings = variationSettings;
+      console.log('Applied variation settings:', {
+        element: element.textContent,
+        settings: variationSettings
+      });
+    }
 
     // Randomly apply OpenType feature if available
     if (font.features && font.features.length > 0) {
@@ -111,17 +222,6 @@ export class WordCreator {
         const feature = font.features[Math.floor(Math.random() * font.features.length)];
         element.style.fontFeatureSettings = `"${feature}" 1`;
       }
-    }
-
-    // Apply random variable font settings if available
-    if (font.axes && font.axes.length > 0) {
-      const settings = font.axes.map(axis => {
-        const range = axis.max - axis.min;
-        const randomValue = axis.min + (Math.random() * range);
-        return `"${axis.tag}" ${randomValue.toFixed(2)}`;
-      });
-
-      element.style.fontVariationSettings = settings.join(', ');
     }
   }
 }

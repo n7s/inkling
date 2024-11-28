@@ -49,7 +49,7 @@ class SuperShow {
     this.cellHeight = this.viewportHeight / this.gridCells;
   }
 
-  initializeComponents() {
+  async initializeComponents() {
     // DOM elements
     this.container = document.querySelector('.display-container');
     this.wordStream = document.getElementById('word-stream');
@@ -61,11 +61,9 @@ class SuperShow {
     // Initialize animation controller
     this.animationController = new AnimationController(this.wordStream);
 
-    // Initialize UI with proper speed handling
+    // Initialize UI
     this.ui = new SuperUI({
       onSpeedChange: (speed) => {
-        // Convert speed slider value (1-1000) to animation duration
-        // Map 1 to 30s (slowest) and 1000 to 1s (fastest)
         const duration = 30 - ((speed - 1) / (1000 - 1)) * (30 - 1);
         document.documentElement.style.setProperty('--animation-duration', `${duration}s`);
       },
@@ -75,6 +73,10 @@ class SuperShow {
 
     // Initialize controls
     this.uiControls = new UIControls();
+
+    // Initialize word creator
+    this.wordCreator = new WordCreator();
+    await this.wordCreator.loadWordList(); // Ensure words are loaded before continuing
 
     // Initialize font handling
     this.fontLoader = new FontLoader({
@@ -134,29 +136,30 @@ class SuperShow {
   }
 
   createWord() {
-    const word = this.words[Math.floor(Math.random() * this.words.length)];
-    const font = this.fonts[Math.floor(Math.random() * this.fonts.length)];
-
-    const element = document.createElement('div');
-    element.className = 'stream-word';
-    element.textContent = this.transformCase(word);
-
-    const fontSize = this.calculateFontSize();
-    element.style.fontSize = `${fontSize}vh`;
-    element.style.fontFamily = `"${font.fontFamily}"`;
-
-    if (this.foregroundColor) {
-      element.style.color = this.foregroundColor;
+    if (!this.wordCreator || !this.wordCreator.fonts.length) {
+      console.log('No fonts available for word creation');
+      return null;
     }
 
-    const metrics = this.measureWord(element.textContent, font.fontFamily, fontSize);
-    const position = this.findAvailablePosition(metrics);
+    const element = this.wordCreator.createWord();
+    if (element) {
+      const metrics = this.measureWord(element.textContent, element.style.fontFamily, parseFloat(element.style.fontSize));
+      const position = this.findAvailablePosition(metrics);
 
-    if (position) {
-      element.style.setProperty('--y', `${position.y}vh`);
-      const bubble = this.createBubble(element, position, metrics);
-      this.setupBubbleCleanup(element, bubble);
-      return element;
+      if (position) {
+        element.style.setProperty('--y', `${position.y}vh`);
+        const bubble = this.createBubble(element, position, metrics);
+        this.setupBubbleCleanup(element, bubble);
+
+        console.log('Word created with settings:', {
+          text: element.textContent,
+          fontFamily: element.style.fontFamily,
+          variationSettings: element.style.fontVariationSettings,
+          position: position
+        });
+
+        return element;
+      }
     }
 
     return null;
@@ -281,11 +284,8 @@ class SuperShow {
   async handleFontDrop(buffer, filename) {
     try {
       const fontData = await this.fontLoader.loadFont(buffer, filename);
-      this.fonts.push(fontData);
-
-      if (this.fonts.length === 1) {
-        this.start();
-      }
+      console.log('Font loaded from drop:', fontData);
+      this.handleFontLoaded(fontData);
     } catch (error) {
       console.error('Error loading font:', error);
       alert('Error loading font file');
@@ -293,7 +293,20 @@ class SuperShow {
   }
 
   handleFontLoaded(fontData) {
-    console.log('Font loaded:', fontData.fontFamily);
+    console.log('Font loaded in SuperShow, data:', {
+      fontFamily: fontData.fontFamily,
+      hasInfo: !!fontData.fontInfo,
+      hasAxes: !!fontData.fontInfo?.axes,
+      axes: fontData.fontInfo?.axes
+    });
+
+    // Add font to WordCreator
+    this.wordCreator.addFont(fontData);
+
+    // Start animation if not already running
+    if (!this.isAnimating) {
+      this.start();
+    }
   }
 
   // =========================================================================
@@ -302,6 +315,10 @@ class SuperShow {
 
   start() {
     if (this.isAnimating) return;
+    if (!this.wordCreator || !this.wordCreator.words.length) {
+      console.error('Cannot start: no words available');
+      return;
+    }
     this.isAnimating = true;
     this.lastWordTime = 0;
     this.currentLine = { y: 0, height: 0, xOffset: 0 };

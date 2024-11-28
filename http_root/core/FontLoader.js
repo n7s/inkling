@@ -26,6 +26,11 @@ export class FontLoader {
     try {
       // Parse the font using OpenType.js
       const font = opentype.parse(buffer);
+      console.log('OpenType parsed font:', {
+        tables: Object.keys(font.tables),
+        hasFvar: !!font.tables.fvar,
+        axes: font.tables.fvar?.axes
+      });
 
       // Create a unique name for this font instance
       const uniqueFontName = `Font_${Date.now()}`;
@@ -39,10 +44,13 @@ export class FontLoader {
       this.currentFont = font;
       const fontInfo = getFontInformation(font, filename);
 
+      console.log('Font info generated:', fontInfo);
+
       this.callbacks.onFontLoaded?.({ font, fontInfo, fontFamily: uniqueFontName });
       return { font, fontInfo, fontFamily: uniqueFontName };
 
     } catch (error) {
+      console.error('Error loading font:', error);
       this.callbacks.onError?.(error);
       throw error;
     }

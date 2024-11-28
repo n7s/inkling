@@ -98,8 +98,17 @@ export function getFontInformation(font, filename) {
   const names = font.names;
   const os2 = font.tables.os2;
   const head = font.tables.head;
+  const fvar = font.tables.fvar;
 
-  return {
+  console.log('Font tables available:', {
+    hasNames: !!names,
+    hasOS2: !!os2,
+    hasHead: !!head,
+    hasFvar: !!fvar,
+    fvarAxes: fvar?.axes
+  });
+
+  const info = {
     // Basic info
     filename,
     fontFamily: names.fontFamily?.en || 'Unknown',
@@ -126,6 +135,14 @@ export function getFontInformation(font, filename) {
     // Variable font axes
     axes: extractVariableAxes(font)
   };
+
+// Before returning the info object
+console.log('Full font axes information:', {
+  rawFvar: font.tables.fvar,
+  extractedAxes: extractVariableAxes(font),
+});
+
+return info;
 }
 
 // Helper functions remain the same
@@ -143,13 +160,25 @@ function extractOpenTypeFeatures(font) {
 }
 
 function extractVariableAxes(font) {
-  if (!font.tables.fvar) return [];
+  if (!font.tables.fvar) {
+    console.log('No fvar table found in font');
+    return [];
+  }
 
-  return font.tables.fvar.axes.map(axis => ({
-    tag: axis.tag,
-    name: AXIS_NAMES[axis.tag] || axis.tag,
-    min: axis.minValue,
-    max: axis.maxValue,
-    default: axis.defaultValue
-  }));
+  console.log('Raw fvar axes:', font.tables.fvar.axes);
+
+  const axes = font.tables.fvar.axes.map(axis => {
+    const mappedAxis = {
+      tag: axis.tag,
+      name: AXIS_NAMES[axis.tag] || axis.tag,
+      min: axis.minValue,
+      max: axis.maxValue,
+      default: axis.defaultValue
+    };
+    console.log('Mapped axis:', mappedAxis);
+    return mappedAxis;
+  });
+
+  console.log('Final extracted axes:', axes);
+  return axes;
 }
