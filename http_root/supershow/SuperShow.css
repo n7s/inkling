@@ -29,16 +29,15 @@
 /* Word Stream Container */
 .word-stream {
   position: absolute;
-  /* Calculate size using pythagoras: √2 * (100% + 2 * safety margin) */
-  width: 200vw;    /* Back to smaller but still enough for rotation */
+  width: 200vw;
   height: 200vh;
-  /* Center it */
   left: -50vw;
   top: -50vh;
   transform-origin: center center;
   will-change: transform;
   overflow: hidden;
 }
+
 
 /* Individual Words */
 .stream-word {
@@ -49,28 +48,28 @@
   pointer-events: none;
   -webkit-font-smoothing: antialiased;
   backface-visibility: hidden;
-  animation: moveAcross var(--animation-duration) linear forwards;
-  transform: translateY(-50vh);
+  animation: moveAcross var(--animation-duration, 15s) linear forwards;
 }
 
 @keyframes moveAcross {
   0% {
     opacity: 0;
-    transform: translate(-100vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(calc(-100vw), var(--y, 0vh));
   }
   2% {
     opacity: 1;
-    transform: translate(-95vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(calc(-95vw), var(--y, 0vh));
   }
   98% {
     opacity: 1;
-    transform: translate(95vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(calc(95vw), var(--y, 0vh));
   }
   100% {
     opacity: 0;
-    transform: translate(100vw, var(--y, 0)) translateY(-50vh);
+    transform: translate(calc(100vw), var(--y, 0vh));
   }
 }
+
 
 /* Drop Zone */
 #drop-text {

@@ -2,6 +2,8 @@
 // WordPacker.js - CSS-first word packing system
 // =============================================================================
 
+import { WordMeasurement } from './WordMeasurement.js';
+
 export class WordPacker {
   constructor(container) {
     this.container = container;
@@ -16,6 +18,32 @@ export class WordPacker {
     // Performance monitoring
     this.lastPerformanceLog = 0;
     this.performanceInterval = 1000;
+
+    // Measure word dimensions
+    this.wordMeasurement = new WordMeasurement();
+  }
+
+  async addWord(wordElement) {
+    if (this.boxes.size >= this.maxWords) return false;
+
+    const measurements = await this.wordMeasurement.measureWord(wordElement);
+    const position = this.findSpaceForWord(measurements);
+
+    if (position) {
+      wordElement.style.setProperty('--y', `${position.y}vh`);
+      this.container.appendChild(wordElement);
+
+      this.boxes.set(wordElement, {
+        top: position.y,
+        bottom: position.y + measurements.heightVh,
+        heightVh: measurements.heightVh,
+        element: wordElement
+      });
+
+      return true;
+    }
+
+    return false;
   }
 
   initialize() {

@@ -9,6 +9,8 @@ import { AnimationController } from './AnimationController.js';
 import { WordCreator } from './WordCreator.js';
 import { WordPacker } from './WordPacker.js';
 import { SuperUI } from './SuperUI.js';
+import { WordMeasurement } from './WordMeasurement.js';
+import { AnimationTimingController } from './AnimationTimingController.js';
 
 class SuperShow {
   // =========================================================================
@@ -22,6 +24,9 @@ class SuperShow {
     this.initializeComponents();
     this.initializeEventListeners();
     this.loadWordList();
+    this.baseCreationInterval = 300; // Fixed time between word creation in ms
+    this.lastWordTime = 0;
+    this.wordInterval = this.baseCreationInterval;
   }
 
   initializeState() {
@@ -58,14 +63,34 @@ class SuperShow {
     this.measuringCanvas = document.createElement('canvas');
     this.ctx = this.measuringCanvas.getContext('2d');
 
+    // Initialize animation timing controller
+    this.timingController = new AnimationTimingController();
+
     // Initialize animation controller
     this.animationController = new AnimationController(this.wordStream);
+
+    // Set up interval callback
+    this.animationController.setIntervalCallback((interval) => {
+        this.wordInterval = interval;
+    });
+
+    // Initialize UI with the new speed handler
+    this.ui = new SuperUI({
+      onSpeedChange: (speed) => {
+        this.animationController.setSpeed(speed);
+      },
+      onAngleChange: (angle) => this.animationController.setAngle(angle),
+      onColorChange: (fg, bg) => this.setColors(fg, bg)
+    });
 
     // Initialize UI
     this.ui = new SuperUI({
       onSpeedChange: (speed) => {
+        // Only change animation speed, not creation timing
         const duration = 30 - ((speed - 1) / (1000 - 1)) * (30 - 1);
         document.documentElement.style.setProperty('--animation-duration', `${duration}s`);
+        // Keep word creation interval constant
+        this.wordInterval = this.baseCreationInterval;
       },
       onAngleChange: (angle) => this.animationController.setAngle(angle),
       onColorChange: (fg, bg) => this.setColors(fg, bg)
@@ -76,7 +101,7 @@ class SuperShow {
 
     // Initialize word creator
     this.wordCreator = new WordCreator();
-    await this.wordCreator.loadWordList(); // Ensure words are loaded before continuing
+    await this.wordCreator.loadWordList();
 
     // Initialize font handling
     this.fontLoader = new FontLoader({
@@ -94,6 +119,7 @@ class SuperShow {
       this.viewportWidth = window.innerWidth;
       this.viewportHeight = window.innerHeight;
       this.cellHeight = this.viewportHeight / this.gridCells;
+      this.timingController.updateViewport(this.viewportWidth);
     });
   }
 
@@ -128,13 +154,6 @@ class SuperShow {
     };
   }
 
-  transformCase(word) {
-    const random = Math.random();
-    if (random < 0.1) return word.toUpperCase();
-    if (random < 0.3) return word.charAt(0).toUpperCase() + word.slice(1);
-    return word;
-  }
-
   createWord() {
     if (!this.wordCreator || !this.wordCreator.fonts.length) {
       console.log('No fonts available for word creation');
@@ -150,14 +169,6 @@ class SuperShow {
         element.style.setProperty('--y', `${position.y}vh`);
         const bubble = this.createBubble(element, position, metrics);
         this.setupBubbleCleanup(element, bubble);
-
-        console.log('Word created with settings:', {
-          text: element.textContent,
-          fontFamily: element.style.fontFamily,
-          variationSettings: element.style.fontVariationSettings,
-          position: position
-        });
-
         return element;
       }
     }
@@ -165,68 +176,37 @@ class SuperShow {
     return null;
   }
 
-  calculateFontSize() {
-    const sizeRand = Math.random();
-    if (sizeRand < 0.4) {
-      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.2;
-    } else if (sizeRand < 0.7) {
-      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.4;
-    } else if (sizeRand < 0.9) {
-      return this.minFontSize + (this.maxFontSize - this.minFontSize) * 0.6;
+  createNewWordsIfNeeded(timestamp) {
+    if (timestamp - this.lastWordTime >= this.wordInterval) {
+        const word = this.createWord();
+        if (word) {
+            this.wordStream.appendChild(word);
+            this.lastWordTime = timestamp;
+        }
     }
-    return this.maxFontSize;
-  }
+}
 
   // =========================================================================
   // Position Management
   // =========================================================================
-
-  findNextPosition(wordWidth, wordHeight, baseline) {
-    const containerHeight = this.wordStream.offsetHeight;
-    const containerWidth = this.wordStream.offsetWidth;
-
-    if (this.currentLine.xOffset + wordWidth + this.margin > containerWidth) {
-      this.currentLine.y += this.currentLine.height + this.margin;
-      this.currentLine.xOffset = 0;
-      this.currentLine.height = 0;
-
-      if (this.currentLine.y > containerHeight) {
-        this.currentLine.y = 0;
-      }
-    }
-
-    const position = {
-      x: this.currentLine.xOffset,
-      y: this.currentLine.y + baseline
-    };
-
-    this.currentLine.xOffset += wordWidth + this.margin;
-    this.currentLine.height = Math.max(this.currentLine.height, wordHeight);
-
-    return position;
-  }
 
   findAvailablePosition(metrics) {
     const bubbleWidth = metrics.width + (this.bubblePadding * 2);
     const bubbleHeight = metrics.height + (this.bubblePadding * 2);
     const bubbleHeightVh = (bubbleHeight / this.viewportHeight) * 100;
 
-    // Extend vertical range to cover rotated corners
-    const minY = -100; // Allow placement 100vh above viewport
-    const maxY = 200;  // Allow placement 200vh below viewport
+    const minY = -100;
+    const maxY = 200;
     const range = maxY - minY;
 
     for (let attempts = 0; attempts < 50; attempts++) {
-      // Generate position across extended range
       const y = minY + (Math.random() * range);
-
       const hasCollision = this.checkCollisions(y, bubbleHeightVh);
       if (!hasCollision) {
         return { x: this.viewportWidth, y };
       }
     }
 
-    // Fallback position also uses extended range
     return { x: this.viewportWidth, y: minY + (Math.random() * range) };
   }
 
@@ -238,16 +218,6 @@ class SuperShow {
     });
   }
 
-  checkBubbleCollision(bubble1, bubble2) {
-    const margin = this.bubblePadding * 2;
-    return !(
-      bubble1.x + bubble1.width < bubble2.x - margin ||
-      bubble1.x - margin > bubble2.x + bubble2.width ||
-      bubble1.y + bubble1.height < bubble2.y - margin ||
-      bubble1.y - margin > bubble2.y + bubble2.height
-    );
-  }
-
   // =========================================================================
   // Animation and Updates
   // =========================================================================
@@ -255,8 +225,16 @@ class SuperShow {
   update(timestamp) {
     if (!this.isAnimating) return;
 
+    // Fixed interval word creation
+    if (timestamp - this.lastWordTime >= this.wordInterval) {
+      const word = this.createWord();
+      if (word) {
+        this.wordStream.appendChild(word);
+        this.lastWordTime = timestamp;
+      }
+    }
+
     this.updateBubblePositions();
-    this.createNewWordsIfNeeded(timestamp);
     this.animationFrame = requestAnimationFrame(this.update.bind(this));
   }
 
@@ -267,16 +245,6 @@ class SuperShow {
     });
   }
 
-  createNewWordsIfNeeded(timestamp) {
-    if (timestamp - this.lastWordTime > this.wordInterval) {
-      const word = this.createWord();
-      if (word) {
-        this.wordStream.appendChild(word);
-        this.lastWordTime = timestamp;
-      }
-    }
-  }
-
   // =========================================================================
   // Font Management
   // =========================================================================
@@ -284,7 +252,6 @@ class SuperShow {
   async handleFontDrop(buffer, filename) {
     try {
       const fontData = await this.fontLoader.loadFont(buffer, filename);
-      console.log('Font loaded from drop:', fontData);
       this.handleFontLoaded(fontData);
     } catch (error) {
       console.error('Error loading font:', error);
@@ -293,17 +260,7 @@ class SuperShow {
   }
 
   handleFontLoaded(fontData) {
-    console.log('Font loaded in SuperShow, data:', {
-      fontFamily: fontData.fontFamily,
-      hasInfo: !!fontData.fontInfo,
-      hasAxes: !!fontData.fontInfo?.axes,
-      axes: fontData.fontInfo?.axes
-    });
-
-    // Add font to WordCreator
     this.wordCreator.addFont(fontData);
-
-    // Start animation if not already running
     if (!this.isAnimating) {
       this.start();
     }
@@ -322,7 +279,7 @@ class SuperShow {
     this.isAnimating = true;
     this.lastWordTime = 0;
     this.currentLine = { y: 0, height: 0, xOffset: 0 };
-    this.update();
+    this.update(performance.now());
   }
 
   stop() {
@@ -335,10 +292,10 @@ class SuperShow {
       this.wordStream.innerHTML = '';
     }
     this.currentLine = { y: 0, height: 0, xOffset: 0 };
+    this.wordBubbles = [];
   }
 
   setColors(foreground, background) {
-    this.foregroundColor = foreground;
     if (this.container) {
       this.container.style.backgroundColor = background;
     }
@@ -376,7 +333,6 @@ class SuperShow {
   }
 
   cleanupOccupiedSpaces() {
-    const now = Date.now();
     this.wordBubbles = this.wordBubbles.filter(bubble =>
       performance.now() - bubble.startTime < 15000
     );
