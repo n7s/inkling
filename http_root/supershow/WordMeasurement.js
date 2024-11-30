@@ -55,7 +55,15 @@ export class WordMeasurement {
     this.measurementCache.set(key, measurements);
     clone.remove();
 
-    return measurements;
+    return {
+      width: measurements.width,
+      height: measurements.height,
+      heightVh: measurements.heightVh,
+      widthVh: measurements.widthVh,
+      boundingBox: measurements.boundingBox,
+      baseline: measurements.boundingBox.top,
+      transform: measurements.transform
+    };
   }
 
   async ensureFontLoaded(fontFamily) {
@@ -116,7 +124,7 @@ export class WordMeasurement {
   }
 
   cleanup() {
-    this.measurementContainer.remove();
+    this.measurementContainer?.remove();
     this.measurementCache.clear();
   }
 }

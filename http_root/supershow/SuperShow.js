@@ -5,9 +5,7 @@
 import { FontLoader } from '../core/FontLoader.js';
 import { DragAndDrop } from '../shared/DragAndDrop.js';
 import { UIControls } from '../shared/UIControls.js';
-import { AnimationController } from './AnimationController.js';
 import { WordCreator } from './WordCreator.js';
-import { WordPacker } from './WordPacker.js';
 import { SuperUI } from './SuperUI.js';
 import { WordMeasurement } from './WordMeasurement.js';
 import { AnimationTimingController } from './AnimationTimingController.js';
@@ -24,9 +22,6 @@ class SuperShow {
     this.initializeComponents();
     this.initializeEventListeners();
     this.loadWordList();
-    this.baseCreationInterval = 300; // Fixed time between word creation in ms
-    this.lastWordTime = 0;
-    this.wordInterval = this.baseCreationInterval;
   }
 
   initializeState() {
@@ -36,6 +31,8 @@ class SuperShow {
     this.animationFrame = null;
     this.wordBubbles = [];
     this.currentLine = { y: 0, height: 0, xOffset: 0 };
+    // Add WordMeasurement instance
+    this.wordMeasurement = new WordMeasurement();
   }
 
   initializeConfiguration() {
@@ -55,55 +52,31 @@ class SuperShow {
   }
 
   async initializeComponents() {
-    // DOM elements
+    // Keep all existing initialization code
     this.container = document.querySelector('.display-container');
     this.wordStream = document.getElementById('word-stream');
 
-    // Canvas setup
-    this.measuringCanvas = document.createElement('canvas');
-    this.ctx = this.measuringCanvas.getContext('2d');
-
-    // Initialize animation timing controller
+    // Replace AnimationController with TimingController
     this.timingController = new AnimationTimingController();
 
-    // Initialize animation controller
-    this.animationController = new AnimationController(this.wordStream);
-
-    // Set up interval callback
-    this.animationController.setIntervalCallback((interval) => {
-        this.wordInterval = interval;
-    });
-
-    // Initialize UI with the new speed handler
+    // Update UI initialization to use timing controller
     this.ui = new SuperUI({
       onSpeedChange: (speed) => {
-        this.animationController.setSpeed(speed);
+        this.timingController.setSpeed(speed);
       },
-      onAngleChange: (angle) => this.animationController.setAngle(angle),
+      onAngleChange: (angle) => {
+        if (this.wordStream) {
+          this.wordStream.style.transform = `rotate(${angle}deg)`;
+        }
+      },
       onColorChange: (fg, bg) => this.setColors(fg, bg)
     });
 
-    // Initialize UI
-    this.ui = new SuperUI({
-      onSpeedChange: (speed) => {
-        // Only change animation speed, not creation timing
-        const duration = 30 - ((speed - 1) / (1000 - 1)) * (30 - 1);
-        document.documentElement.style.setProperty('--animation-duration', `${duration}s`);
-        // Keep word creation interval constant
-        this.wordInterval = this.baseCreationInterval;
-      },
-      onAngleChange: (angle) => this.animationController.setAngle(angle),
-      onColorChange: (fg, bg) => this.setColors(fg, bg)
-    });
-
-    // Initialize controls
+    // Keep all other component initialization
     this.uiControls = new UIControls();
-
-    // Initialize word creator
     this.wordCreator = new WordCreator();
     await this.wordCreator.loadWordList();
 
-    // Initialize font handling
     this.fontLoader = new FontLoader({
       onFontLoaded: this.handleFontLoaded.bind(this)
     });
@@ -112,6 +85,23 @@ class SuperShow {
       dropZone: document.body,
       onDrop: this.handleFontDrop.bind(this)
     });
+  }
+
+  // Modify only the timing-related part of the update method
+  update(timestamp) {
+    if (!this.isAnimating) return;
+
+    // Use timing controller to determine word creation
+    if (this.timingController.shouldCreateWord(timestamp)) {
+      const word = this.createWord();
+      if (word) {
+        this.wordStream.appendChild(word);
+      }
+    }
+
+    // Keep existing update logic
+    this.updateBubblePositions();
+    this.animationFrame = requestAnimationFrame(this.update.bind(this));
   }
 
   initializeEventListeners() {
@@ -142,39 +132,49 @@ class SuperShow {
   // Word Creation and Measurement
   // =========================================================================
 
-  measureWord(text, fontFamily, fontSize) {
-    this.ctx.font = `${fontSize}vh ${fontFamily}`;
-    const metrics = this.ctx.measureText(text);
-    const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+  async measureWord(element) {
+    try {
+        return await this.wordMeasurement.measureWord(element);
+    } catch (error) {
+        console.error('Error measuring word:', error);
+        // Fallback measurements if needed
+        return {
+            width: element.offsetWidth,
+            height: element.offsetHeight / window.innerHeight * 100,
+            heightVh: (element.offsetHeight / window.innerHeight * 100),
+            widthVh: (element.offsetWidth / window.innerHeight * 100),
+            boundingBox: {
+                top: 0,
+                right: element.offsetWidth,
+                bottom: element.offsetHeight,
+                left: 0
+            },
+            baseline: 0
+        };
+    }
+}
 
-    return {
-      width: metrics.width,
-      height: height,
-      baseline: metrics.actualBoundingBoxAscent
-    };
-  }
-
-  createWord() {
-    if (!this.wordCreator || !this.wordCreator.fonts.length) {
+async createWord() {
+  if (!this.wordCreator || !this.wordCreator.fonts.length) {
       console.log('No fonts available for word creation');
       return null;
-    }
+  }
 
-    const element = this.wordCreator.createWord();
-    if (element) {
-      const metrics = this.measureWord(element.textContent, element.style.fontFamily, parseFloat(element.style.fontSize));
+  const element = this.wordCreator.createWord();
+  if (element) {
+      const metrics = await this.measureWord(element);
       const position = this.findAvailablePosition(metrics);
 
       if (position) {
-        element.style.setProperty('--y', `${position.y}vh`);
-        const bubble = this.createBubble(element, position, metrics);
-        this.setupBubbleCleanup(element, bubble);
-        return element;
+          element.style.setProperty('--y', `${position.y}vh`);
+          const bubble = this.createBubble(element, position, metrics);
+          this.setupBubbleCleanup(element, bubble);
+          return element;
       }
-    }
-
-    return null;
   }
+
+  return null;
+}
 
   createNewWordsIfNeeded(timestamp) {
     if (timestamp - this.lastWordTime >= this.wordInterval) {
@@ -225,18 +225,18 @@ class SuperShow {
   update(timestamp) {
     if (!this.isAnimating) return;
 
-    // Fixed interval word creation
     if (timestamp - this.lastWordTime >= this.wordInterval) {
-      const word = this.createWord();
-      if (word) {
-        this.wordStream.appendChild(word);
-        this.lastWordTime = timestamp;
-      }
+        this.createWord().then(word => {
+            if (word) {
+                this.wordStream.appendChild(word);
+                this.lastWordTime = timestamp;
+            }
+        });
     }
 
     this.updateBubblePositions();
     this.animationFrame = requestAnimationFrame(this.update.bind(this));
-  }
+}
 
   updateBubblePositions() {
     this.wordBubbles.forEach(bubble => {

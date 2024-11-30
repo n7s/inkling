@@ -34,7 +34,7 @@ export class SuperUI {
       });
     }
 
-    // Rotation control
+    // Rotation control - now updates immediately
     const rotationSlider = document.getElementById('rotation-slider');
     const rotationValue = rotationSlider?.parentElement.querySelector('.value');
     if (rotationSlider && rotationValue) {
