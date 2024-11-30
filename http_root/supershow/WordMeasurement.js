@@ -43,7 +43,9 @@ export class WordMeasurement {
 
     // Wait for font to load if needed
     const fontFamily = computedStyle.fontFamily.split(',')[0].trim().replace(/['"]/g, '');
-    await this.ensureFontLoaded(fontFamily);
+    if (fontFamily && fontFamily !== '') {
+      await this.ensureFontLoaded(fontFamily);
+    }
 
     // Force a layout recalculation
     clone.offsetHeight;
@@ -68,9 +70,12 @@ export class WordMeasurement {
 
   async ensureFontLoaded(fontFamily) {
     try {
-      await document.fonts.load(`1em ${fontFamily}`);
-      // Add extra time for variable fonts and features to settle
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Only attempt to load if we have a valid font family name
+      if (fontFamily && typeof fontFamily === 'string' && fontFamily.trim() !== '') {
+        await document.fonts.load(`1em "${fontFamily}"`);
+        // Add extra time for variable fonts and features to settle
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     } catch (error) {
       console.warn(`Font loading wait failed for ${fontFamily}:`, error);
     }
