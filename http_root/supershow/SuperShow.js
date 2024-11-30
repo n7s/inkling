@@ -91,18 +91,26 @@ class SuperShow {
   update(timestamp) {
     if (!this.isAnimating) return;
 
-    // Use timing controller to determine word creation
     if (this.timingController.shouldCreateWord(timestamp)) {
-      const word = this.createWord();
-      if (word) {
-        this.wordStream.appendChild(word);
-      }
+        // Create word and measure it before adding to DOM
+        this.createWord().then(word => {
+            if (word) {
+                // Force a layout recalculation before animation starts
+                word.style.display = 'none';
+                this.wordStream.appendChild(word);
+
+                // Force browser to process the addition
+                word.offsetHeight;
+
+                // Now make it visible and start animation
+                word.style.display = '';
+            }
+        });
     }
 
-    // Keep existing update logic
     this.updateBubblePositions();
     this.animationFrame = requestAnimationFrame(this.update.bind(this));
-  }
+}
 
   initializeEventListeners() {
     window.addEventListener('resize', () => {

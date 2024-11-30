@@ -54,19 +54,19 @@
 @keyframes moveAcross {
   0% {
     opacity: 0;
-    transform: translate(calc(-100vw), var(--y, 0vh));
+    transform: translate(calc(-200vw), var(--y, 0vh));
   }
   2% {
     opacity: 1;
-    transform: translate(calc(-95vw), var(--y, 0vh));
+    transform: translate(calc(-190vw), var(--y, 0vh));
   }
   98% {
     opacity: 1;
-    transform: translate(calc(95vw), var(--y, 0vh));
+    transform: translate(calc(190vw), var(--y, 0vh));
   }
   100% {
     opacity: 0;
-    transform: translate(calc(100vw), var(--y, 0vh));
+    transform: translate(calc(200vw), var(--y, 0vh));
   }
 }
 

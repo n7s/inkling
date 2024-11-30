@@ -29,11 +29,8 @@ export class AnimationTimingController {
     // Calculate how long it takes for a word to cross viewport at current speed
     this.currentDuration = this.BASE_DURATION * (this.BASE_SPEED / this.currentSpeed);
 
-    // Calculate how far a word moves per second
-    const pixelsPerSecond = this.VIEWPORT_WIDTH / this.currentDuration;
-
-    // Calculate how often to create words based on desired spacing
-    this.creationInterval = (this.wordSpacing / pixelsPerSecond) * 1000;
+    // Make creation interval proportional to duration
+    this.creationInterval = (this.currentDuration / 15) * 1000;
   }
 
   setSpeed(speed) {
