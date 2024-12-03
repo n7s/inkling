@@ -6,6 +6,7 @@ export class WordMeasurement {
   constructor() {
     this.measurementCache = new Map();
     this.setupMeasurementContext();
+    this.measurementQueue = Promise.resolve();  // Add this line only
   }
 
   setupMeasurementContext() {
@@ -66,6 +67,21 @@ export class WordMeasurement {
       baseline: measurements.boundingBox.top,
       transform: measurements.transform
     };
+  }
+
+  async queueMeasurement(wordElement) {
+    return new Promise((resolve) => {
+      this.measurementQueue = this.measurementQueue.then(async () => {
+        try {
+          // Use existing measureWord method
+          const measurements = await this.measureWord(wordElement);
+          resolve(measurements);
+        } catch (error) {
+          console.error('Measurement error:', error);
+          resolve(null);
+        }
+      });
+    });
   }
 
   async ensureFontLoaded(fontFamily) {

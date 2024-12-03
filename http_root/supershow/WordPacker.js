@@ -26,7 +26,10 @@ export class WordPacker {
   async addWord(wordElement) {
     if (this.boxes.size >= this.maxWords) return false;
 
-    const measurements = await this.wordMeasurement.measureWord(wordElement);
+    // Change this line only
+    const measurements = await this.wordMeasurement.queueMeasurement(wordElement);
+    if (!measurements) return false;  // Add this line
+
     const position = this.findSpaceForWord(measurements);
 
     if (position) {
