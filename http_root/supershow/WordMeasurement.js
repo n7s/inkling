@@ -6,7 +6,8 @@ export class WordMeasurement {
   constructor() {
     this.measurementCache = new Map();
     this.setupMeasurementContext();
-    this.measurementQueue = Promise.resolve();  // Add this line only
+    this.measurementQueue = Promise.resolve();
+    this.loadingFonts = new Map();  // Add this line only
   }
 
   setupMeasurementContext() {
@@ -45,7 +46,7 @@ export class WordMeasurement {
     // Wait for font to load if needed
     const fontFamily = computedStyle.fontFamily.split(',')[0].trim().replace(/['"]/g, '');
     if (fontFamily && fontFamily !== '') {
-      await this.ensureFontLoaded(fontFamily);
+      await this.ensureFontLoaded(fontFamily, wordElement);
     }
 
     // Force a layout recalculation
@@ -84,16 +85,35 @@ export class WordMeasurement {
     });
   }
 
-  async ensureFontLoaded(fontFamily) {
-    try {
-      // Only attempt to load if we have a valid font family name
-      if (fontFamily && typeof fontFamily === 'string' && fontFamily.trim() !== '') {
-        await document.fonts.load(`1em "${fontFamily}"`);
-        // Add extra time for variable fonts and features to settle
-        await new Promise(resolve => setTimeout(resolve, 50));
+  async ensureFontLoaded(fontFamily, element) {
+    if (!fontFamily || this.loadingFonts.has(fontFamily)) {
+      return this.loadingFonts.get(fontFamily);
+    }
+
+    const loadingPromise = new Promise(async (resolve) => {
+      try {
+        // Try loading with computed style settings
+        const computedStyle = window.getComputedStyle(element);
+        const fontWeight = computedStyle.fontWeight;
+        const fontStyle = computedStyle.fontStyle;
+
+        await document.fonts.load(`${fontWeight} ${fontStyle} 1em "${fontFamily}"`);
+        // Add small delay for browser rendering
+        await new Promise(r => setTimeout(r, 50));
+        resolve(true);
+      } catch (error) {
+        console.warn(`Font loading failed for ${fontFamily}:`, error);
+        resolve(false);
       }
-    } catch (error) {
-      console.warn(`Font loading wait failed for ${fontFamily}:`, error);
+    });
+
+    this.loadingFonts.set(fontFamily, loadingPromise);
+    return loadingPromise;
+  }
+
+  cleanupFontLoading(fontFamily) {
+    if (fontFamily) {
+      this.loadingFonts.delete(fontFamily);
     }
   }
 
@@ -147,5 +167,6 @@ export class WordMeasurement {
   cleanup() {
     this.measurementContainer?.remove();
     this.measurementCache.clear();
+    this.loadingFonts.clear();
   }
 }
