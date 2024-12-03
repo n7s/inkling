@@ -230,28 +230,43 @@ async createWord() {
   // Animation and Updates
   // =========================================================================
 
-  update(timestamp) {
-    if (!this.isAnimating) return;
-
-    if (timestamp - this.lastWordTime >= this.wordInterval) {
-        this.createWord().then(word => {
-            if (word) {
-                this.wordStream.appendChild(word);
-                this.lastWordTime = timestamp;
-            }
-        });
-    }
-
-    this.updateBubblePositions();
-    this.animationFrame = requestAnimationFrame(this.update.bind(this));
-}
-
   updateBubblePositions() {
     this.wordBubbles.forEach(bubble => {
       const transform = new WebKitCSSMatrix(window.getComputedStyle(bubble.element).transform);
       bubble.x = transform.e;
     });
   }
+
+  // Periodic cleanup
+  update(timestamp) {
+    if (!this.isAnimating) return;
+
+    if (this.timingController.shouldCreateWord(timestamp)) {
+        // Create word and measure it before adding to DOM
+        this.createWord().then(word => {
+            if (word) {
+                // Force a layout recalculation before animation starts
+                word.style.display = 'none';
+                this.wordStream.appendChild(word);
+
+                // Force browser to process the addition
+                word.offsetHeight;
+
+                // Now make it visible and start animation
+                word.style.display = '';
+            }
+        });
+    }
+
+    this.updateBubblePositions();
+
+    // Add periodic cleanup every 5 seconds
+    if (timestamp % 5000 < 16) {
+        this.cleanupOccupiedSpaces();
+    }
+
+    this.animationFrame = requestAnimationFrame(this.update.bind(this));
+}
 
   // =========================================================================
   // Font Management
@@ -297,6 +312,13 @@ async createWord() {
       this.animationFrame = null;
     }
     if (this.wordStream) {
+      // Remove event listeners before clearing
+      Array.from(this.wordStream.children).forEach(word => {
+        const listeners = word.getEventListeners?.('animationend') || [];
+        listeners.forEach(listener => {
+          word.removeEventListener('animationend', listener.listener);
+        });
+      });
       this.wordStream.innerHTML = '';
     }
     this.currentLine = { y: 0, height: 0, xOffset: 0 };

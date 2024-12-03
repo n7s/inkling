@@ -30,44 +30,58 @@ export class WordMeasurement {
       return this.measurementCache.get(key);
     }
 
-    // Clone the element with all its styles
+    // Add timeout wrapper
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Measurement timeout')), 5000);
+    });
+
+    try {
+      const result = await Promise.race([
+        this._performMeasurement(wordElement),
+        timeoutPromise
+      ]);
+      return result;
+    } catch (error) {
+      console.error('Measurement failed:', error);
+      return null;
+    }
+  }
+
+  // Move the measurement logic to a separate method
+  async _performMeasurement(wordElement) {
     const clone = wordElement.cloneNode(true);
     this.measurementContainer.appendChild(clone);
 
-    // Ensure all styles are applied including animations
-    clone.style.cssText += wordElement.style.cssText;
+    try {
+      // Ensure all styles are applied including animations
+      clone.style.cssText += wordElement.style.cssText;
 
-    // Copy computed styles to ensure everything is captured
-    const computedStyle = window.getComputedStyle(wordElement);
-    for (const property of computedStyle) {
-      clone.style[property] = computedStyle[property];
+      // Copy computed styles to ensure everything is captured
+      const computedStyle = window.getComputedStyle(wordElement);
+      for (const property of computedStyle) {
+        clone.style[property] = computedStyle[property];
+      }
+
+      // Wait for font to load if needed
+      const fontFamily = computedStyle.fontFamily.split(',')[0].trim().replace(/['"]/g, '');
+      if (fontFamily && fontFamily !== '') {
+        await this.ensureFontLoaded(fontFamily, wordElement);
+      }
+
+      // Force a layout recalculation
+      clone.offsetHeight;
+
+      // Get the measurements including any transforms
+      const measurements = this.getMeasurementsWithTransforms(clone);
+
+      // Cache the result
+      this.measurementCache.set(this.getCacheKey(wordElement), measurements);
+
+      return measurements;
+    } finally {
+      // Ensure clone is always removed
+      clone.remove();
     }
-
-    // Wait for font to load if needed
-    const fontFamily = computedStyle.fontFamily.split(',')[0].trim().replace(/['"]/g, '');
-    if (fontFamily && fontFamily !== '') {
-      await this.ensureFontLoaded(fontFamily, wordElement);
-    }
-
-    // Force a layout recalculation
-    clone.offsetHeight;
-
-    // Get the measurements including any transforms
-    const measurements = this.getMeasurementsWithTransforms(clone);
-
-    // Cache and cleanup
-    this.measurementCache.set(key, measurements);
-    clone.remove();
-
-    return {
-      width: measurements.width,
-      height: measurements.height,
-      heightVh: measurements.heightVh,
-      widthVh: measurements.widthVh,
-      boundingBox: measurements.boundingBox,
-      baseline: measurements.boundingBox.top,
-      transform: measurements.transform
-    };
   }
 
   async queueMeasurement(wordElement) {
@@ -160,12 +174,31 @@ export class WordMeasurement {
     });
   }
 
-  clearCache() {
-    this.measurementCache.clear();
+  clearOldCacheEntries() {
+    const now = Date.now();
+    for (const [key, value] of this.measurementCache.entries()) {
+      if (now - value.timestamp > 60000) { // Clear entries older than 1 minute
+        this.measurementCache.delete(key);
+      }
+    }
   }
 
   cleanup() {
-    this.measurementContainer?.remove();
+    // First clear any ongoing measurements
+    this.measurementQueue = Promise.resolve();
+
+    // Clean up measurement elements
+    if (this.measurementContainer) {
+      // Remove all children first
+      while (this.measurementContainer.firstChild) {
+        this.measurementContainer.firstChild.remove();
+      }
+      // Then remove the container itself
+      this.measurementContainer.remove();
+      this.measurementContainer = null;
+    }
+
+    // Clear all caches
     this.measurementCache.clear();
     this.loadingFonts.clear();
   }
