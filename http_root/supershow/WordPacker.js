@@ -71,31 +71,6 @@ export class WordPacker {
     return this.boxes.size < this.maxWords;
   }
 
-  addWord(wordElement) {
-    if (this.boxes.size >= this.maxWords) return false;
-
-    const box = this.measureWord(wordElement);
-    const position = this.findSpaceForWord(box);
-
-    if (position) {
-      // Set the CSS variable for animation
-      wordElement.style.setProperty('--y', `${position.y}vh`);
-      this.container.appendChild(wordElement);
-
-      // Store box in vh units
-      this.boxes.set(wordElement, {
-        top: position.y,
-        bottom: position.y + (box.heightVh),
-        heightVh: box.heightVh,
-        element: wordElement
-      });
-
-      return true;
-    }
-
-    return false;
-  }
-
   measureWord(wordElement) {
     // Measure word size while hidden
     const tempDiv = wordElement.cloneNode(true);
