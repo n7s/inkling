@@ -5,23 +5,15 @@
 import { WordMeasurement } from './WordMeasurement.js';
 
 export class WordPacker {
-  constructor(container) {
+  constructor(container, timingController) {  // Add timingController parameter
     this.container = container;
-    this.boxes = new Map();  // word element -> bounding box
-
-    // Configuration
-    this.margin = 20;        // pixels between words
-    this.maxWords = 100;     // reduced from 200 for better performance
-    this.scanInterval = 100; // increased from 16ms for better performance
-    this.lastScanTime = 0;
-
-    // Performance monitoring
-    this.lastPerformanceLog = 0;
-    this.performanceInterval = 1000;
-
-    // Measure word dimensions
-    this.wordMeasurement = new WordMeasurement();
-  }
+    this.timingController = timingController;
+    this.boxes = new Map();
+    const settings = timingController.getSettings();
+    this.margin = 20;
+    this.maxWords = settings.maxWords;
+    // Remove scanInterval as timing is handled by controller
+}
 
   async addWord(wordElement) {
     if (this.boxes.size >= this.maxWords) return false;

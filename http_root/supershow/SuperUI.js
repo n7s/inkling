@@ -32,6 +32,9 @@ export class SuperUI {
         speedValue.textContent = speed;
         this.onSpeedChange?.(speed);
       });
+
+      // Trigger initial speed setting
+      this.onSpeedChange?.(parseInt(speedSlider.value));
     }
 
     // Rotation control - now updates immediately

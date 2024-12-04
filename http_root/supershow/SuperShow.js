@@ -6,6 +6,7 @@ import { FontLoader } from '../core/FontLoader.js';
 import { DragAndDrop } from '../shared/DragAndDrop.js';
 import { UIControls } from '../shared/UIControls.js';
 import { WordCreator } from './WordCreator.js';
+import { WordPacker } from './WordPacker.js';
 import { SuperUI } from './SuperUI.js';
 import { WordMeasurement } from './WordMeasurement.js';
 import { AnimationTimingController } from './AnimationTimingController.js';
@@ -30,18 +31,22 @@ class SuperShow {
     this.isAnimating = false;
     this.animationFrame = null;
     this.wordBubbles = [];
-    this.currentLine = { y: 0, height: 0, xOffset: 0 };
-    // Add WordMeasurement instance
+    this.timingController = new AnimationTimingController();
     this.wordMeasurement = new WordMeasurement();
+    this.initialWordsPlaced = false;
+    this.rightEdge = window.innerWidth; // Start at viewport right edge
   }
 
+  // Add this method to SuperShow class, after initializeState()
   initializeConfiguration() {
-    this.minFontSize = 1.5;
-    this.maxFontSize = 10;
-    this.wordInterval = 50;
-    this.lastWordTime = 0;
-    this.margin = 5;
-    this.bubblePadding = 5;
+    const settings = this.timingController?.getSettings() || {
+      minFontSize: 1.5,
+      maxFontSize: 10,
+      margin: 5,
+      bubblePadding: 5
+    };
+
+    Object.assign(this, settings);
   }
 
   initializeViewport() {
@@ -52,12 +57,11 @@ class SuperShow {
   }
 
   async initializeComponents() {
-    // Keep all existing initialization code
     this.container = document.querySelector('.display-container');
     this.wordStream = document.getElementById('word-stream');
 
-    // Replace AnimationController with TimingController
-    this.timingController = new AnimationTimingController();
+    // Pass timing controller to components that need it
+    this.wordPacker = new WordPacker(this.container, this.timingController);
 
     // Update UI initialization to use timing controller
     this.ui = new SuperUI({
@@ -88,21 +92,16 @@ class SuperShow {
   }
 
   // Modify only the timing-related part of the update method
+  // SuperShow.js
   update(timestamp) {
     if (!this.isAnimating) return;
 
     if (this.timingController.shouldCreateWord(timestamp)) {
-        // Create word and measure it before adding to DOM
         this.createWord().then(word => {
             if (word) {
-                // Force a layout recalculation before animation starts
                 word.style.display = 'none';
                 this.wordStream.appendChild(word);
-
-                // Force browser to process the addition
                 word.offsetHeight;
-
-                // Now make it visible and start animation
                 word.style.display = '';
             }
         });
@@ -110,7 +109,7 @@ class SuperShow {
 
     this.updateBubblePositions();
     this.animationFrame = requestAnimationFrame(this.update.bind(this));
-}
+  }
 
   initializeEventListeners() {
     window.addEventListener('resize', () => {
@@ -164,21 +163,37 @@ class SuperShow {
 
 async createWord() {
   if (!this.wordCreator || !this.wordCreator.fonts.length) {
-      console.log('No fonts available for word creation');
       return null;
   }
 
   const element = this.wordCreator.createWord();
   if (element) {
-      const metrics = await this.measureWord(element);
-      const position = this.findAvailablePosition(metrics);
+    console.log('Creating word:', element.textContent);
+    const metrics = await this.measureWord(element);
 
-      if (position) {
-          element.style.setProperty('--y', `${position.y}vh`);
-          const bubble = this.createBubble(element, position, metrics);
-          this.setupBubbleCleanup(element, bubble);
-          return element;
+    if (!this.initialWordsPlaced) {
+      // Fill phase - start at 0 and move left
+      const x = this.wordBubbles.length * 20;  // Each word 20 units left
+      element.style.setProperty('--x', `${x}px`);
+
+      if (x >= window.innerWidth) {
+        console.log('Reached left edge, switching to normal mode');
+        this.initialWordsPlaced = true;
       }
+    } else {
+      // Normal mode - always at right edge (0)
+      element.style.setProperty('--x', '0px');
+    }
+
+    element.style.setProperty('--y', `${10 + (Math.random() * 80)}%`);
+
+    const bubble = this.createBubble(element, {
+      x: window.innerWidth - parseFloat(element.style.getPropertyValue('--x')),
+      y: element.style.getPropertyValue('--y')
+    }, metrics);
+    this.setupBubbleCleanup(element, bubble);
+
+    return element;
   }
 
   return null;
@@ -199,23 +214,25 @@ async createWord() {
   // =========================================================================
 
   findAvailablePosition(metrics) {
-    const bubbleWidth = metrics.width + (this.bubblePadding * 2);
-    const bubbleHeight = metrics.height + (this.bubblePadding * 2);
-    const bubbleHeightVh = (bubbleHeight / this.viewportHeight) * 100;
-
     const minY = -100;
     const maxY = 200;
     const range = maxY - minY;
+    const y = minY + (Math.random() * range);
 
-    for (let attempts = 0; attempts < 50; attempts++) {
-      const y = minY + (Math.random() * range);
-      const hasCollision = this.checkCollisions(y, bubbleHeightVh);
-      if (!hasCollision) {
-        return { x: this.viewportWidth, y };
+    if (!this.initialWordsPlaced) {
+      // Start from right viewport edge (0) and populate leftward
+      const x = 0 - (this.wordBubbles.length * 20); // Each word 20 units to the left
+
+      // Once we've filled to left edge
+      if (x <= -150) {
+        this.initialWordsPlaced = true;
       }
+
+      return { x, y };
     }
 
-    return { x: this.viewportWidth, y: minY + (Math.random() * range) };
+    // After initial fill, always place at right edge (0)
+    return { x: 0, y };
   }
 
   checkCollisions(y, bubbleHeightVh) {
@@ -296,11 +313,12 @@ async createWord() {
   start() {
     if (this.isAnimating) return;
     if (!this.wordCreator || !this.wordCreator.words.length) {
-      console.error('Cannot start: no words available');
-      return;
+        console.error('Cannot start: no words available');
+        return;
     }
     this.isAnimating = true;
     this.lastWordTime = 0;
+    this.initialWordsPlaced = false;  // Reset this flag when starting
     this.currentLine = { y: 0, height: 0, xOffset: 0 };
     this.update(performance.now());
   }

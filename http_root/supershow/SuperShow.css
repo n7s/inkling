@@ -15,61 +15,43 @@
   --animation-duration: 15s;
 }
 
-/* Animation Container */
+/* Container definitions */
 .display-container {
   position: fixed;
-  top: -50vh;
-  left: -50vw;
-  right: -50vw;
-  bottom: -50vh;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
-  background-color: var(--white);
 }
 
-/* Word Stream Container */
-.word-stream {
+#word-stream {
   position: absolute;
-  width: 200vw;
-  height: 200vh;
-  left: -50vw;
-  top: -50vh;
-  transform-origin: center center;
-  will-change: transform;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
 }
 
-
-/* Individual Words */
+/* Word styling */
 .stream-word {
   position: absolute;
   white-space: nowrap;
-  will-change: transform;
-  opacity: 0;
   pointer-events: none;
   -webkit-font-smoothing: antialiased;
-  backface-visibility: hidden;
-  animation: moveAcross var(--animation-duration, 15s) linear forwards;
+  right: var(--x);
+  top: var(--y);
+  animation: moveRight var(--animation-duration, 15s) linear;
 }
 
-@keyframes moveAcross {
-  0% {
-    opacity: 0;
-    transform: translate(calc(-200vw), var(--y, 0vh));
+@keyframes moveRight {
+  from {
+    transform: translateX(0);
   }
-  2% {
-    opacity: 1;
-    transform: translate(calc(-190vw), var(--y, 0vh));
-  }
-  98% {
-    opacity: 1;
-    transform: translate(calc(190vw), var(--y, 0vh));
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(200vw), var(--y, 0vh));
+  to {
+    transform: translateX(100vw);  /* Move exactly one viewport width right */
   }
 }
-
 
 /* Drop Zone */
 #drop-text {
