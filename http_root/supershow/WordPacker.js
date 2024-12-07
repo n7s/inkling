@@ -5,33 +5,81 @@
 import { WordMeasurement } from './WordMeasurement.js';
 
 export class WordPacker {
-  constructor(container, timingController) {  // Add timingController parameter
+  constructor(container, timingController) {
     this.container = container;
     this.timingController = timingController;
     this.boxes = new Map();
     const settings = timingController.getSettings();
-    this.margin = 20;
+    this.margin = 5;
     this.maxWords = settings.maxWords;
-    // Remove scanInterval as timing is handled by controller
-}
+    this.wordMeasurement = new WordMeasurement();
+
+    this.viewportBounds = {
+      top: 10,
+      bottom: 90,
+      height: 80
+    };
+
+    // Add cleanup interval
+    this.cleanupInterval = setInterval(() => this.cleanupRemovedWords(), 1000);
+
+    // Initialize performance tracking
+    this.lastScanTime = performance.now();
+    this.lastPerformanceLog = performance.now();
+    this.performanceInterval = 5000; // Log every 5 seconds
+  }
+
+  cleanupRemovedWords() {
+    let cleaned = 0;
+    for (const [element, box] of this.boxes.entries()) {
+      if (!element.parentNode) {
+        this.boxes.delete(element);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      console.log(`Cleaned up ${cleaned} finished words`);
+    }
+  }
 
   async addWord(wordElement) {
-    if (this.boxes.size >= this.maxWords) return false;
+    // Clean up before adding new word
+    this.cleanupRemovedWords();
 
-    // Change this line only
+    if (this.boxes.size >= this.maxWords) {
+      console.log('Max words reached:', this.maxWords);
+      return false;
+    }
+
     const measurements = await this.wordMeasurement.queueMeasurement(wordElement);
-    if (!measurements) return false;  // Add this line
+    if (!measurements) {
+      console.log('Failed to get measurements');
+      return false;
+    }
 
-    const position = this.findSpaceForWord(measurements);
+    const heightVh = measurements.heightVh;
+    const box = {
+      heightVh: heightVh,
+      widthVh: measurements.widthVh
+    };
 
+    const position = this.findSpaceForWord(box);
     if (position) {
-      wordElement.style.setProperty('--y', `${position.y}vh`);
+      const yPos = this.viewportBounds.top + position.y;
+      wordElement.style.setProperty('--y', `${yPos}vh`);
+
+      // Add animation end cleanup
+      wordElement.addEventListener('animationend', () => {
+        this.boxes.delete(wordElement);
+        wordElement.remove();
+      });
+
       this.container.appendChild(wordElement);
 
       this.boxes.set(wordElement, {
-        top: position.y,
-        bottom: position.y + measurements.heightVh,
-        heightVh: measurements.heightVh,
+        top: yPos,
+        bottom: yPos + heightVh,
+        heightVh: heightVh,
         element: wordElement
       });
 
@@ -41,59 +89,21 @@ export class WordPacker {
     return false;
   }
 
-  initialize() {
-    console.log('Initializing WordPacker');
-    this.clear();
-    this.initializeViewportBounds();
-  }
-
-  clear() {
-    this.boxes.clear();
-    this.container.innerHTML = '';
-  }
-
-  initializeViewportBounds() {
-    const height = window.innerHeight;
-    // Track viewport in vh units to match CSS
-    this.viewportBounds = {
-      top: 0,
-      bottom: 100, // 100vh
-      height: 100  // 100vh
-    };
-  }
-
-  needsWords() {
-    return this.boxes.size < this.maxWords;
-  }
-
-  measureWord(wordElement) {
-    // Measure word size while hidden
-    const tempDiv = wordElement.cloneNode(true);
-    tempDiv.style.visibility = 'hidden';
-    tempDiv.style.position = 'absolute';
-    document.body.appendChild(tempDiv);
-    const rect = tempDiv.getBoundingClientRect();
-    document.body.removeChild(tempDiv);
-
-    // Convert measurements to vh units
-    const heightVh = (rect.height / window.innerHeight) * 100;
-    const marginVh = (this.margin / window.innerHeight) * 100;
-
-    return {
-      heightVh: heightVh + (marginVh * 2),
-      element: wordElement
-    };
-  }
-
   findSpaceForWord(box) {
-    const maxAttempts = 20;
-    const minY = 0;
-    const maxY = this.viewportBounds.height - box.heightVh;
+    const maxAttempts = 50;
+    const usableHeight = this.viewportBounds.height - box.heightVh;
 
-    // Try random positions across the entire viewport
+    if (usableHeight <= 0) {
+      return null;
+    }
+
+    // Try to find non-colliding position with better distribution
+    const sectionHeight = usableHeight / 10; // Divide viewport into 10 sections
     for (let i = 0; i < maxAttempts; i++) {
-      // Use full viewport range for placement
-      const y = Math.random() * maxY;
+      // Try different sections of the viewport
+      const section = Math.floor(i / 5) % 10; // Change section every 5 attempts
+      const baseY = section * sectionHeight;
+      const y = baseY + (Math.random() * sectionHeight);
 
       if (!this.checkCollisions(y, box.heightVh)) {
         return { y };
@@ -105,22 +115,18 @@ export class WordPacker {
 
   checkCollisions(y, height) {
     const testBox = {
-      top: y,
-      bottom: y + height
+      top: this.viewportBounds.top + y,
+      bottom: this.viewportBounds.top + y + height + this.margin // Add margin to prevent tight packing
     };
 
-    // Check against all active boxes instead of just recent ones
-    return Array.from(this.boxes.values()).some(existingBox =>
-      !(testBox.bottom < existingBox.top || testBox.top > existingBox.bottom)
-    );
+    return Array.from(this.boxes.values()).some(existingBox => {
+      return !(testBox.bottom < existingBox.top - this.margin ||
+               testBox.top > existingBox.bottom + this.margin);
+    });
   }
 
   update() {
     const now = performance.now();
-
-    // Only update at specified interval
-    if (now - this.lastScanTime < this.scanInterval) return;
-    this.lastScanTime = now;
 
     // Log performance if needed
     if (now - this.lastPerformanceLog > this.performanceInterval) {
@@ -128,16 +134,14 @@ export class WordPacker {
       this.lastPerformanceLog = now;
     }
 
-    // Remove words after animation ends
-    this.removeFinishedWords();
+    // Clean up finished words
+    this.cleanupRemovedWords();
   }
 
-  removeFinishedWords() {
-    for (const [element, box] of this.boxes.entries()) {
-      // Check if element is done animating (has moved off screen)
-      if (!element.parentNode) {
-        this.boxes.delete(element);
-      }
+  destroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
     }
+    this.boxes.clear();
   }
 }

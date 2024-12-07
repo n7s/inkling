@@ -5,25 +5,71 @@
 import { UIControls } from '../shared/UIControls.js';
 
 export class SuperUI {
-  constructor({ onSpeedChange, onAngleChange, onColorChange }) {
-    // Callbacks
+  constructor({ onSpeedChange, onAngleChange, onColorChange, onReset, onToggleFontInfo }) {
+    // Store callbacks
     this.onSpeedChange = onSpeedChange;
     this.onAngleChange = onAngleChange;
     this.onColorChange = onColorChange;
+    this.onReset = onReset;
+    this.onToggleFontInfo = onToggleFontInfo;
 
-    // Use existing UIControls for fullscreen and color scheme
+    // Initialize state
+    this.foregroundColor = 'var(--color-black)';
+    this.backgroundColor = 'var(--color-white)';
+    this.fontInfoVisible = false;
+
+    // Initialize UI components
     this.uiControls = new UIControls();
-
-    // State
-    this.foregroundColor = null;
-    this.backgroundColor = null;
-
-    // Initialize UI
     this.setupEventListeners();
   }
 
   setupEventListeners() {
-    // Animation speed control
+    // Font info toggle
+    const fontInfoBtn = document.getElementById('font-info-toggle');
+    if (fontInfoBtn) {
+      fontInfoBtn.addEventListener('click', () => {
+        this.fontInfoVisible = !this.fontInfoVisible;
+        fontInfoBtn.textContent = this.fontInfoVisible ? 'Hide font info' : 'Show font info';
+        this.onToggleFontInfo?.(this.fontInfoVisible);
+      });
+    }
+
+    // Reset button
+    const resetBtn = document.getElementById('reset-animation');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.onReset?.();
+      });
+    }
+
+    // Color selects
+    const fgSelect = document.getElementById('foreground-color');
+    const bgSelect = document.getElementById('background-color');
+    if (fgSelect && bgSelect) {
+      fgSelect.addEventListener('change', (e) => {
+        this.foregroundColor = e.target.value;
+        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
+      });
+      bgSelect.addEventListener('change', (e) => {
+        this.backgroundColor = e.target.value;
+        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
+      });
+    }
+
+    // Swap colors
+    const swapBtn = document.getElementById('background-toggle');
+    if (swapBtn) {
+      swapBtn.addEventListener('click', () => {
+        [this.foregroundColor, this.backgroundColor] = [this.backgroundColor, this.foregroundColor];
+        if (fgSelect && bgSelect) {
+          fgSelect.value = this.foregroundColor;
+          bgSelect.value = this.backgroundColor;
+        }
+        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
+      });
+    }
+
+    // Speed slider
     const speedSlider = document.getElementById('speed-slider');
     const speedValue = document.querySelector('.speed-value');
     if (speedSlider && speedValue) {
@@ -32,12 +78,9 @@ export class SuperUI {
         speedValue.textContent = speed;
         this.onSpeedChange?.(speed);
       });
-
-      // Trigger initial speed setting
-      this.onSpeedChange?.(parseInt(speedSlider.value));
     }
 
-    // Rotation control - now updates immediately
+    // Direction slider
     const rotationSlider = document.getElementById('rotation-slider');
     const rotationValue = rotationSlider?.parentElement.querySelector('.value');
     if (rotationSlider && rotationValue) {
@@ -48,80 +91,60 @@ export class SuperUI {
       });
     }
 
-    // Color controls
-    const foregroundSelect = document.getElementById('foreground-color');
-    const backgroundSelect = document.getElementById('background-color');
-    const swapButton = document.getElementById('background-toggle');
-
-    if (foregroundSelect && backgroundSelect && swapButton) {
-      // Initial colors
-      this.foregroundColor = foregroundSelect.value;
-      this.backgroundColor = backgroundSelect.value;
-      this.onColorChange?.(this.foregroundColor, this.backgroundColor);
-
-      // Color select handlers
-      foregroundSelect.addEventListener('change', () => {
-        this.foregroundColor = foregroundSelect.value;
-        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
-      });
-
-      backgroundSelect.addEventListener('change', () => {
-        this.backgroundColor = backgroundSelect.value;
-        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
-      });
-
-      // Swap colors button
-      swapButton.addEventListener('click', () => {
-        // Store current values
-        const tempFg = this.foregroundColor;
-        const tempBg = this.backgroundColor;
-
-        // Swap internal state
-        this.foregroundColor = tempBg;
-        this.backgroundColor = tempFg;
-
-        // Update dropdowns
-        for (let i = 0; i < foregroundSelect.options.length; i++) {
-          if (foregroundSelect.options[i].value === this.foregroundColor) {
-            foregroundSelect.selectedIndex = i;
-          }
-        }
-
-        for (let i = 0; i < backgroundSelect.options.length; i++) {
-          if (backgroundSelect.options[i].value === this.backgroundColor) {
-            backgroundSelect.selectedIndex = i;
-          }
-        }
-
-        // Notify of color change
-        this.onColorChange?.(this.foregroundColor, this.backgroundColor);
-      });
-    }
-
-    // Font info toggle
-    const fontInfoToggle = document.getElementById('font-info-toggle');
-    const fontInfo = document.getElementById('font-info');
-    if (fontInfoToggle && fontInfo) {
-      fontInfoToggle.addEventListener('click', () => {
-        const isVisible = fontInfo.style.display !== 'none';
-        fontInfo.style.display = isVisible ? 'none' : 'block';
-        fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
-      });
-    }
-
-    // Fullscreen button
-    const fullscreenButton = document.querySelector('#fullScreen button');
-    if (fullscreenButton) {
-      fullscreenButton.addEventListener('click', () => {
+    // Fullscreen
+    const fullscreenBtn = document.querySelector('#fullScreen button');
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', () => {
         this.uiControls.toggleFullscreen();
       });
     }
 
-    // Keyboard controls
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'f') {
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'f') {
         this.uiControls.toggleFullscreen();
       }
     });
+
+    // Controls visibility
+    const controls = document.getElementById('controls');
+    if (controls) {
+      controls.addEventListener('mouseenter', () => {
+        controls.style.opacity = '1';
+      });
+      controls.addEventListener('mouseleave', () => {
+        controls.style.opacity = '0';
+      });
+    }
+  }
+
+  // Utility methods to programmatically update UI
+  setSpeed(speed) {
+    const slider = document.getElementById('speed-slider');
+    const value = document.querySelector('.speed-value');
+    if (slider && value) {
+      slider.value = speed;
+      value.textContent = speed;
+    }
+  }
+
+  setRotation(angle) {
+    const slider = document.getElementById('rotation-slider');
+    const value = slider?.parentElement.querySelector('.value');
+    if (slider && value) {
+      slider.value = angle;
+      value.textContent = `${angle}°`;
+    }
+  }
+
+  setColors(fg, bg) {
+    const fgSelect = document.getElementById('foreground-color');
+    const bgSelect = document.getElementById('background-color');
+    if (fgSelect && bgSelect) {
+      fgSelect.value = fg;
+      bgSelect.value = bg;
+      this.foregroundColor = fg;
+      this.backgroundColor = bg;
+    }
   }
 }

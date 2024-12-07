@@ -12,6 +12,8 @@
   --color-yellow: rgb(255, 255, 0);
   --color-pink: rgb(255, 0, 255);
   --color-cyan: rgb(0, 255, 255);
+
+  --viewport-width: 100vw;
   --animation-duration: 15s;
 }
 
@@ -23,6 +25,9 @@
   right: 0;
   bottom: 0;
   overflow: hidden;
+  /* Ensure container doesn't interfere with animations */
+  transform: none;
+  will-change: auto;
 }
 
 #word-stream {
@@ -31,26 +36,27 @@
   height: 100%;
   left: 0;
   top: 0;
+  /* Ensure clean slate for child animations */
+  transform: none;
+  perspective: none;
+  transform-style: flat;
 }
 
-/* Word styling */
-.stream-word {
-  position: absolute;
-  white-space: nowrap;
-  pointer-events: none;
-  -webkit-font-smoothing: antialiased;
-  right: var(--x);
-  top: var(--y);
-  animation: moveRight var(--animation-duration, 15s) linear;
-}
-
-@keyframes moveRight {
+@keyframes streamAnimation {
   from {
-    transform: translateX(0);
+    transform: translateX(-100vw) translateY(var(--y, 0));
   }
   to {
-    transform: translateX(100vw);  /* Move exactly one viewport width right */
+    transform: translateX(100vw) translateY(var(--y, 0));
   }
+}
+
+.stream-word {
+  position: absolute;
+  transform: translateX(-100vw) translateY(var(--y, 0));
+  animation: streamAnimation var(--animation-duration) linear forwards;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 /* Drop Zone */

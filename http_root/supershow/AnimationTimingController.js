@@ -4,68 +4,39 @@
 
 export class AnimationTimingController {
   constructor() {
-    // Animation constants
-    this.VIEWPORT_WIDTH = window.innerWidth;
-    this.BASE_SPEED = 50;
-    this.BASE_DURATION = 15;
-    this.wordSpacing = 100;
-
-    // Current state
-    this.currentSpeed = 10;  // Match slider's initial value of 10
-    this.currentDuration = this.BASE_DURATION;
+    this.BASE_DURATION = 15; // 15 seconds to cross screen
+    this.CREATION_INTERVAL = 500; // Create word every 500ms
     this.lastWordTime = 0;
 
-    this.updateTimings();
-
-    // Add settings object as single source of truth
     this.settings = {
-      wordCreationInterval: this.creationInterval,
-      baseSpeed: this.BASE_SPEED,
       animationDuration: this.BASE_DURATION,
-      minWordSpacing: this.wordSpacing
+      maxWords: 50,
+      minWordSpacing: 5
     };
-
-    // Calculate initial creation interval
-    this.updateTimings();
-
-    // Handle viewport changes
-    window.addEventListener('resize', () => {
-      this.VIEWPORT_WIDTH = window.innerWidth;
-      this.updateTimings();
-    });
   }
 
   getSettings() {
     return { ...this.settings };
   }
 
-  updateTimings() {
-    // Reduce the scaling factor from 5 to a smaller number
-    const scaledSpeed = this.currentSpeed * 0.5;  // Now 1-100 becomes 0.5-50
-
-    // Calculate how long it takes for a word to cross viewport
-    this.currentDuration = this.BASE_DURATION * (this.BASE_SPEED / scaledSpeed);
-
-    // Adjust word creation interval
-    this.creationInterval = Math.max(100, (this.currentDuration / 50) * 100);
-  }
-
-  setSpeed(speed) {
-    console.log('Setting speed to:', speed);  // Add this line
-    this.currentSpeed = speed;
-    this.updateTimings();
-    document.documentElement.style.setProperty(
-      '--animation-duration',
-      `${this.currentDuration}s`
-    );
-}
-
   shouldCreateWord(timestamp) {
-    if (timestamp - this.lastWordTime >= this.creationInterval) {
+    if (timestamp - this.lastWordTime >= this.CREATION_INTERVAL) {
       this.lastWordTime = timestamp;
       return true;
     }
     return false;
+  }
+
+  setSpeed(speed) {
+    // Simple linear relationship
+    const newDuration = this.BASE_DURATION / (speed / 10);
+    document.documentElement.style.setProperty('--animation-duration', `${newDuration}s`);
+    // Adjust creation interval proportionally
+    this.CREATION_INTERVAL = 500 * (speed / 10);
+  }
+
+  updateViewport() {
+    // No need to adjust timing based on viewport
   }
 
   // Get current timings for debugging
