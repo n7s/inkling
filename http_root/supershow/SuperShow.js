@@ -238,7 +238,7 @@ class SuperShow {
 
   async loadWordList() {
     try {
-      const response = await fetch('../word_lists/euro_words.txt');
+      const response = await fetch('/word_lists/euro_words.txt');
       const text = await response.text();
       this.words = text.split('\n').filter(word => word.trim());
       if (this.words.length > 0) {
