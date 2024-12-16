@@ -17,7 +17,7 @@ while ! nc -z localhost 8080; do
   sleep 0.1
 done
 
-open -a "Google Chrome" "http://localhost:8080/"
+open -a "Google Chrome" --args --incognito "http://localhost:8080/"
 wait
 
 #EOF
