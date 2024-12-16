@@ -139,6 +139,60 @@ class GalleyProof {
       if (this.container.firstChild) {
         this.container.firstChild.style.width = `${width}%`;
       }
+    } );
+
+    // Letter spacing slider
+    const letterSpacingContainer = sliders[3];
+    const letterSpacingSlider = letterSpacingContainer?.querySelector('input[type="range"]');
+    const letterSpacingValue = letterSpacingContainer?.querySelector('.value');
+
+    if (letterSpacingSlider) {
+      letterSpacingSlider.min = "-0.2";
+      letterSpacingSlider.max = "0.5";
+      letterSpacingSlider.step = "0.001";
+      const initialLetterSpacing = 0;
+      letterSpacingSlider.value = initialLetterSpacing.toString();
+
+      if (letterSpacingValue) {
+        letterSpacingValue.textContent = `${initialLetterSpacing} rem`;
+      }
+    }
+
+    letterSpacingSlider?.addEventListener('input', (e) => {
+      const spacing = parseFloat(e.target.value);
+      if (letterSpacingValue) {
+        letterSpacingValue.textContent = `${spacing.toFixed(3)} rem`;
+      }
+      if (this.container.firstChild) {
+        this.container.firstChild.style.letterSpacing = `${spacing}rem`;
+      }
+    });
+
+    // Word spacing slider
+    const wordSpacingContainer = sliders[4];
+    const wordSpacingSlider = wordSpacingContainer?.querySelector('input[type="range"]');
+    const wordSpacingValue = wordSpacingContainer?.querySelector('.value');
+
+    if (wordSpacingSlider) {
+      wordSpacingSlider.min = "-1";
+      wordSpacingSlider.max = "2";
+      wordSpacingSlider.step = "0.001";
+      const initialWordSpacing = 0;
+      wordSpacingSlider.value = initialWordSpacing.toString();
+
+      if (wordSpacingValue) {
+        wordSpacingValue.textContent = `${initialWordSpacing} rem`;
+      }
+    }
+
+    wordSpacingSlider?.addEventListener('input', (e) => {
+      const spacing = parseFloat(e.target.value);
+      if (wordSpacingValue) {
+        wordSpacingValue.textContent = `${spacing.toFixed(3)} rem`;
+      }
+      if (this.container.firstChild) {
+        this.container.firstChild.style.wordSpacing = `${spacing}rem`;
+      }
     });
   }
 
@@ -214,6 +268,41 @@ class GalleyProof {
       if (textElement) {
         textElement.style.fontFamily = `"${fontFamily}"`;
         textElement.style.fontFeatureSettings = 'normal';
+        // Reset spacing properties to default values when loading a new font
+        textElement.style.letterSpacing = '0rem';
+        textElement.style.wordSpacing = '0rem';
+        // Set initial line-height to match slider value
+        textElement.style.lineHeight = '1.2';
+
+        // Reset slider positions and values
+        const sliders = document.querySelectorAll('.slider-container');
+
+        // Reset leading slider and ensure it matches the initial value
+        const leadingContainer = sliders[1];
+        if (leadingContainer) {
+          const slider = leadingContainer.querySelector('input[type="range"]');
+          const value = leadingContainer.querySelector('.value');
+          if (slider) slider.value = "1.2";
+          if (value) value.textContent = "1.2×";
+        }
+
+        // Reset letter spacing slider
+        const letterSpacingContainer = sliders[3];
+        if (letterSpacingContainer) {
+          const slider = letterSpacingContainer.querySelector('input[type="range"]');
+          const value = letterSpacingContainer.querySelector('.value');
+          if (slider) slider.value = "0";
+          if (value) value.textContent = "0 rem";
+        }
+
+        // Reset word spacing slider
+        const wordSpacingContainer = sliders[4];
+        if (wordSpacingContainer) {
+          const slider = wordSpacingContainer.querySelector('input[type="range"]');
+          const value = wordSpacingContainer.querySelector('.value');
+          if (slider) slider.value = "0";
+          if (value) value.textContent = "0 rem";
+        }
       }
     });
 
