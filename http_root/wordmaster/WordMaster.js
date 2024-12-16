@@ -212,11 +212,12 @@ class WordAnimator {
     this.processedWordList = this.wordList.map(word => {
       if (word === word.toLowerCase()) {
         const random = Math.random();
-        if (random < 0.05) {
+        if (random < 0.15) {            // 15% uppercase
           return word.toUpperCase();
-        } else if (random < 0.15) {
+        } else if (random < 0.50) {     // 35% capitalized (0.50 - 0.15 = 0.35)
           return word.charAt(0).toUpperCase() + word.slice(1);
         }
+        return word;  // Return original word if no capitalization
       }
       return word;
     });
