@@ -7,7 +7,6 @@ export class VariationAxes {
     this.container = options.container;
     this.onChange = options.onChange;
     this.currentSettings = {};
-
     // Create a specific container for axis controls
     this.axisContainer = document.createElement('div');
     this.axisContainer.className = 'axis-controls';
@@ -35,11 +34,11 @@ export class VariationAxes {
       slider.min = axis.min;
       slider.max = axis.max;
       slider.value = axis.default;
-      slider.step = (axis.max - axis.min) / 1000;
+      slider.step = 0.1;  // Set fixed step size for better control
 
       const value = document.createElement('span');
       value.className = 'value';
-      value.textContent = axis.default;
+      value.textContent = parseFloat(axis.default).toFixed(1);  // Format initial value
 
       slider.addEventListener('input', (e) => {
         this.updateAxisValue(axis.tag, e.target.value);
@@ -64,7 +63,6 @@ export class VariationAxes {
     } else {
       this.currentSettings[tag] = numValue;
     }
-
     this.updateVariationSettings();
   }
 
@@ -75,9 +73,8 @@ export class VariationAxes {
   updateVariationSettings() {
     const settings = Object.entries(this.currentSettings)
       .filter(([_, val]) => !isNaN(val))
-      .map(([tag, val]) => `"${tag}" ${val}`)
+      .map(([tag, val]) => `"${tag}" ${val.toFixed(1)}`)  // Format value in settings string
       .join(', ');
-
     this.onChange?.(settings || 'normal');
   }
 }
