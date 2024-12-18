@@ -101,14 +101,14 @@ class GalleyProof {
       leadingSlider.value = initialLeading.toString();
 
       if (leadingValue) {
-        leadingValue.textContent = `${initialLeading}×`;
+        leadingValue.textContent = `${initialLeading.toFixed(2)}×`;
       }
     }
 
     leadingSlider?.addEventListener('input', (e) => {
       const leading = parseFloat(e.target.value);
       if (leadingValue) {
-        leadingValue.textContent = `${leading}×`;
+        leadingValue.textContent = `${leading.toFixed(2)}×`;
       }
       if (this.container.firstChild) {
         this.container.firstChild.style.lineHeight = leading;
@@ -272,7 +272,7 @@ class GalleyProof {
         textElement.style.letterSpacing = '0rem';
         textElement.style.wordSpacing = '0rem';
         // Set initial line-height to match slider value
-        textElement.style.lineHeight = '1.2';
+        textElement.style.lineHeight = '1.20';
 
         // Reset slider positions and values
         const sliders = document.querySelectorAll('.slider-container');
@@ -282,8 +282,8 @@ class GalleyProof {
         if (leadingContainer) {
           const slider = leadingContainer.querySelector('input[type="range"]');
           const value = leadingContainer.querySelector('.value');
-          if (slider) slider.value = "1.2";
-          if (value) value.textContent = "1.2×";
+          if (slider) slider.value = "1.20";
+          if (value) value.textContent = "1.20×";
         }
 
         // Reset letter spacing slider
