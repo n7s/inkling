@@ -77,7 +77,6 @@ class WordAnimator {
   updateFeatures(featureString) {
     if (this.container.firstChild) {
       this.container.firstChild.style.fontFeatureSettings = featureString;
-      // Re-fit text since some features might affect word width
       this.textFitter.fitText(this.container.firstChild, this.container);
     }
   }
@@ -116,31 +115,28 @@ class WordAnimator {
       }
     });
 
-    // Animation delay slider with debouncing
-    const delayContainer = sliders[1];
-    const delaySlider = delayContainer?.querySelector('input[type="range"]');
-    const delayValue = delayContainer?.querySelector('.value');
+    // Animation delay slider
+    const delaySlider = sliders[1]?.querySelector('input[type="range"]');
+    const delayValue = sliders[1]?.querySelector('.value');
 
-    let delayTimeout;
+    if (delaySlider) {
+      // Set initial delay value
+      this.animationDelay = parseInt(delaySlider.value);
+    }
+
     delaySlider?.addEventListener('input', (e) => {
       const newDelay = parseInt(e.target.value);
       if (delayValue) {
         delayValue.textContent = newDelay + 'ms';
       }
+      this.animationDelay = newDelay;
 
-      clearTimeout(delayTimeout);
-      delayTimeout = setTimeout(() => {
-        this.updateAnimationDelay(newDelay);
-      }, 200);
+      // If animation is running, update the timing
+      if (this.isAnimating) {
+        clearTimeout(this.animationTimer);
+        this.scheduleNextUpdate();
+      }
     });
-  }
-
-  updateAnimationDelay(newDelay) {
-    this.animationDelay = newDelay;
-    if (this.isAnimating) {
-      this.stop();
-      this.start(newDelay);
-    }
   }
 
   setupEventListeners() {
@@ -178,11 +174,14 @@ class WordAnimator {
     switch(event.key) {
       case ' ':
         event.preventDefault();
+        console.log('Space pressed. isAnimating:', this.isAnimating);
         if (this.isAnimating) {
+          console.log('Stopping animation');
           this.stop();
         } else {
-          const delaySlider = document.querySelector('.slider-container:nth-child(2) input[type="range"]');
-          this.start(parseInt(delaySlider?.value || this.animationDelay));
+          console.log('Starting animation');
+          // Get the current animation delay value directly from the class
+          this.start(this.animationDelay);
         }
         break;
       case 'f':
@@ -214,10 +213,10 @@ class WordAnimator {
         const random = Math.random();
         if (random < 0.15) {            // 15% uppercase
           return word.toUpperCase();
-        } else if (random < 0.50) {     // 35% capitalized (0.50 - 0.15 = 0.35)
+        } else if (random < 0.50) {     // 35% capitalized
           return word.charAt(0).toUpperCase() + word.slice(1);
         }
-        return word;  // Return original word if no capitalization
+        return word;
       }
       return word;
     });
@@ -231,12 +230,10 @@ class WordAnimator {
 
     this.container.style.fontFamily = `"${fontFamily}"`;
 
-    // Extract and set up OpenType features
     this.openTypeFeatures.clear();
     this.openTypeFeatures.extractFeatures(fontInfo);
     this.openTypeFeatures.createButtons();
 
-    // Create axis controls if font has variable axes
     if (fontInfo.axes) {
       this.variationAxes.createAxesControls(fontInfo.axes);
     }
@@ -245,7 +242,10 @@ class WordAnimator {
   }
 
   async start(interval = this.animationDelay) {
-    if (this.isAnimating) return;
+    console.log('Start called with interval:', interval);
+
+    clearTimeout(this.animationTimer);
+    clearTimeout(this.fadeTimer);
 
     this.isAnimating = true;
     this.animationDelay = interval;
@@ -254,53 +254,60 @@ class WordAnimator {
       await this.loadWordList();
     }
 
-    this.updateWord();
+    this.container.classList.remove('fade-out');
+
+    // Force an immediate word update
+    await this.updateWord();
     this.scheduleNextUpdate();
   }
 
   stop() {
+    console.log('Stop called');
     this.isAnimating = false;
     clearTimeout(this.animationTimer);
     clearTimeout(this.fadeTimer);
     this.animationTimer = null;
     this.fadeTimer = null;
+    this.container.classList.remove('fade-out');
   }
 
   scheduleNextUpdate() {
-    if (!this.isAnimating) return;
+    clearTimeout(this.animationTimer);
 
-    this.animationTimer = setTimeout(() => {
-      this.updateWord();
-      this.scheduleNextUpdate();
-    }, this.animationDelay);
+    if (this.isAnimating) {
+      this.animationTimer = setTimeout(() => {
+        this.updateWord();
+        this.scheduleNextUpdate();
+      }, this.animationDelay);
+    }
   }
 
   updateWord() {
-    if (this.wordList.length === 0 || !this.isAnimating) return;
+    return new Promise((resolve) => {
+      this.container.classList.add('fade-out');
 
-    clearTimeout(this.fadeTimer);
-    this.container.classList.add('fade-out');
+      setTimeout(() => {
+        if (this.isAnimating) {
+          const word = this.getRandomWord();
+          console.log('Updating to new word:', word);
 
-    this.fadeTimer = setTimeout(() => {
-      if (!this.isAnimating) return;
+          const wordElement = document.createElement('div');
+          wordElement.textContent = word;
+          wordElement.style.whiteSpace = 'nowrap';
 
-      const word = this.getRandomWord();
-      const wordElement = document.createElement('div');
-      wordElement.textContent = word;
-      wordElement.style.whiteSpace = 'nowrap';
+          const currentFeatures = this.openTypeFeatures.getFeatureString();
+          wordElement.style.fontFeatureSettings = currentFeatures;
+          wordElement.style.fontVariationSettings = this.currentVariationSettings;
 
-      // Apply current OpenType features and variation settings
-      const currentFeatures = this.openTypeFeatures.getFeatureString();
-      wordElement.style.fontFeatureSettings = currentFeatures;
-      wordElement.style.fontVariationSettings = this.currentVariationSettings;
+          this.container.innerHTML = '';
+          this.container.appendChild(wordElement);
+          this.textFitter.fitText(wordElement, this.container);
+        }
 
-      this.container.innerHTML = '';
-      this.container.appendChild(wordElement);
-
-      this.textFitter.fitText(wordElement, this.container);
-
-      this.container.classList.remove('fade-out');
-    }, 300);
+        this.container.classList.remove('fade-out');
+        resolve();
+      }, 300);
+    });
   }
 
   getRandomWord() {

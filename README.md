@@ -1,39 +1,82 @@
-# HyperFlipBX90000Dominator
-A stand-alone webpage that flips through the glyphs of a font. The page uses `opentype.js` to achieve this, it is in the header so no internet connection is needed.
+# The BX90000 Font Presenter Super Suite
+This is a collection of three webpages that enables you to present fonts in three different ways.
+
+## HyperFlip BX90000 Dominator
+Will animate single glyphs from the font you drop on the window.
+
+## WordMaster BX90000 Excelsior
+Will animate words rendered in the font you drop on the window.
+
+## GalleyProof BX90000 Zenith
+Will render a column of text in the font you drop on the window.
 
 ## License
 Like the included `opentype.js` this software is licensed under the MIT license.
 
-##  How to use the HyperFlip BX 90000 Dominator
-Open the HTML page in a browser and drop a font on it. It will read OTF or TTF, static and variable.
-![Open the HTML page](images/1.png)
+## Requirements
+These pages needs to be served with the `http_server` webserver component from Node, so this must be installed before using these pages. The `serve.sh` script will detect and alert you if this component is not installed.
 
-## Keyboard shortcuts
-Pressing the `Space` key on your keyboard pauses/resumes the animation. Pressing either `arrow left` or `h` moves ten glyphs back, and pressing either `arrow right` or `l` moves ten glyphs forward. Pressing either `arrow up` or `k` moves one glyph forward, and pressing either `arrow down` or `j` will move one glyph back.
+The `serve.sh` and `serve.bat` scripts are configured to find and use the Chrome browser.
 
-**HyperFlipBX90000Dominator** will display the most common axes present in your font, if your font is variable.
-![Adjust the values](images/3.png)
+##  How to use the BX90000 Font Presenter Super Suite
+Execute the `serve.sh` (Linux or MacOS) or `serve.bat` (Windows). These scripts will check for the presence of the `http_server`, warn you if it isn’t installed, otherwise proceed with detecting your operating system, finding the Chrome executable, and open the `index.html` in an Incognito window.
+![The BX90000 Font Presenter Super Suite](images/initial_page.png)
 
-The control panel will become invisible when you move out your mouse cursor.
-![Clean interface](images/4.png)
+Click on one of the three options.
 
-If you like a negative rendering there is button for that.
-![Colour toggle](images/5.png)
+## HyperFlip BX90000 Dominator
+Will animate single glyphs from the font you drop on the window.
+![The HyperFlip BX90000 Dominator](images/hyperflip.png)
 
-If you want to see some information about the font there is a button for that.
-![Font info](images/font-info.png)
+### Options
+- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
+- Pause/continue the glyph animation by pressing your `space` key
+- Jump ten glyphs forward by pressing the `l` or `▶︎` key
+- Jump one glyph forward by pressing the `k` or `▲` key
+- Jump ten glyphs backwards by pressing the `h` or `◀︎` key
+- Jump one glyph backwards by pressing the `j` or `▼` key
 
-If you want to see some information about the currently displayed glyph there is a button for that.
-![Glyph info](images/glyph-info.png)
+The page has a control panel that will appear when you hover the mouse over the bottom of the page
+- Show font info
+- Show glyph info
+- Show a metrics grid overlay
+- Swap colours
+- Randomise glyph order
+- Adjust the font size
+- Adjust the vertical position
+- Adjust the animation delay
+- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
 
-If you want to see the vertical and horizontal metrics there is a button for that.
-![Glyph info](images/metrics.png)
+## WordMaster BX90000 Excelsior
+Will animate words rendered in the font you drop on the window.
+![The WordMaster BX90000 Excelsior](images/wordmaster.png)
 
-In the upper right corner there is a `Fullscreen` button. It full-screens **HyperFlipBX90000Dominator**.
+### Options
+- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
+- Pause/continue the glyph animation by pressing your `space` key
 
-In the control panel there is a `Randomize glyph order` button. It randomises the glyph order. Press it again and it reverts to sequential glyph order.
+The page has a control panel that will appear when you hover the mouse over the bottom of the page
+- Show font info
+- Swap colours
+- Toggle Stylistic Alternates and small-caps
+- Adjust the font size
+- Adjust the animation delay
+- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
 
-Once you have found a setting you like you can let it animate.
-![Animate](images/animation.gif)
+## GalleyProof BX90000 Zenith
+Will render a column of text in the font you drop on the window.
+![The GalleyProof BX90000 Zenith](images/galleyproof.png)
 
-Yes I will be accepting pull requests. Don’t ask me for new features, make them yourself and pull request me.
+### Options
+- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
+
+The page has a control panel that will appear when you hover the mouse over the bottom of the page
+- Show font info
+- Swap colours
+- Toggle Stylistic Alternates and small-caps
+- Adjust the font size
+- Adjust the leading
+- Adjust the column width
+- Adjust the letter spacing
+- Adjust the word spacing
+- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
