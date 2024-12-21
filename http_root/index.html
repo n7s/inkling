@@ -1,35 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <title>The BX90000 Font Presenter Super Suite</title>
-    <!-- Import our modular JavaScript as a module -->
-    <script type="module" src="./shared/index.js"></script>
-    <!-- Original CSS remains the same -->
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <title>Inkling 🗺️ </title>
+
+  <!-- Import the OpenType.js library first -->
+  <script src="./shared/opentype.js"></script>
+
+  <!-- Import our modular JavaScript as a module -->
+  <script type="module" src="./hyperflip/HyperFlip.js"></script>
+
+  <!-- Original CSS remains the same -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="fullScreen">
-        <button>Fullscreen</button>
+
+  <div id="drop-text">
+  <p>
+    Welcome to <em>Inkling 🗺️</em> <br> <br> 
+	Drop your TTF, OTF or WOFF file here <br> to start the interactive display of all the letters contained in the font. 
+
+	<br>
+	<br> 
+	<i>(The font file is not uploaded to any server <br> but stays local to your computer). </i>
+	</p>
+
+
+  </div>
+
+  <div class="display-container">
+    <div id="glyph-display" class="glyph-buffer"></div>
+  </div>
+  <div id="font-info" class="font-info">
+    <div id="font-info-content"></div>
+  </div>
+
+  <div id="glyph-info" class="glyph-info">
+    <div id="glyph-info-content"></div>
+  </div>
+
+  <div class="metrics-container">
+    <div id="font-metrics-overlay"></div>
+  </div>
+
+  <div id="controls">
+    <div class="buttons-container">
+      <button id="font-info-toggle">Toggle font info</button>
+      <button id="glyph-info-toggle">Toggle glyph info</button>
+      <button id="metrics-toggle">Toggle metrics</button>
+      <button id="background-toggle">Toggle black and white</button>
+      <button id="randomize-button">Randomize glyph order</button>
+	  <b>[k/→] next letter -  [j/←] previous letter  -  [h/Ctrl←] jump 10 letters -  [l/Ctrl→] jump 10 letters  - [Space] stop and start</b>
     </div>
-    <div class="index_links">
-        <div id="index_link">
-            <a href="HyperFlipBX90000Dominator.html">HyperFlip BX90000 Dominator</a>
-            <p>Will animate single glyphs from the font you drop on the window.</p>
-        </div>
-        <div id="index_link">
-            <a href="WordMasterBX90000Excelsior.html">WordMaster BX90000 Excelsior</a>
-            <p>Will animate words rendered in the font you drop on the window.</p>
-        </div>
-        <div id="index_link">
-            <a href="GalleyProofBX90000Zenith.html">GalleyProof BX90000 Zenith</a>
-            <p>Will render a column of text in the font you drop on the window.</p>
-        </div>
+
+    <div class="slider-container">
+      <label>Font size</label>
+      <input type="range" id="font-size" min="100" max="1000" value="400">
+      <span class="value">400px</span>
     </div>
+
+    <div class="slider-container">
+      <label>Vertical position</label>
+      <input type="range" id="vertical-position" min="0" max="100" value="70">
+      <span class="value">70%</span>
+    </div>
+
+    <div class="slider-container">
+      <label>Animation delay</label>
+      <input type="range" id="animation-delay" min="50" max="5000" value="2000">
+      <span class="value">2000ms</span>
+    </div>
+
+    <div class="footer">
+  <a href="https://github.com/n7s/inkling" target="_blank">Inkling</a> helps showcase beautiful letters from your own fonts (try some from <a href="https://openfontlicense.org/ofl-fonts/" target="_blank">this selection of open fonts</a>) 
+    </div>
+
+  </div>
+
+</div>
 </body>
 </html>
