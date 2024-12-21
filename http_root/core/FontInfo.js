@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { AXIS_NAMES } from './Types.js';
+import { unicodeName } from "../shared/unicode-name.js";
 
 export class FontInfoRenderer {
   /**
@@ -15,33 +16,43 @@ export class FontInfoRenderer {
 
     container.innerHTML = `
         <p><strong>Names</strong><br>
-        Font family &rarr; ${info.fontFamily}<br>
-        Full name &rarr; ${info.fullName}</p>
+        Font family: ${info.fontFamily}<br>
+        Full name: ${info.fullName}<br>
+
+        <p><strong>Description</strong><br>
+		${info.description}</p>
 
         <p><strong>Font file</strong><br>
-        Filename &rarr; ${info.filename}<br>
-        File format &rarr; ${info.format}<br>
-        Units per Em &rarr; ${info.unitsPerEm}<br>
-        Glyph count &rarr; ${info.glyphCount}<br>
-        Monospaced &rarr; ${info.isFixedPitch}</p>
+        Filename: ${info.filename}<br>
+        File format: ${info.format}<br>
+        Units per Em: ${info.unitsPerEm}<br>
+        Monospaced: ${info.isFixedPitch}<br>
 
         <p><strong>Version and dates</strong><br>
-        Version &rarr; ${info.version}<br>
-        Created &rarr; ${info.created}<br>
-        Modified &rarr; ${info.modified}</p>
+        Version: ${info.version}<br>
+		Unique ID: ${info.uniqueID}<br>
+        Created: ${info.created}<br>
+        Modified: ${info.modified}<br></p>
 
         <p><strong>Foundry</strong><br>
-        Manufacturer &rarr; ${info.manufacturer}<br>
-        Designer &rarr; ${info.designer}<br>
-        Vendor ID &rarr; ${info.vendorID}</p>
+		${info.manufacturer || ''} 
+        <a href="${info.manufacturerURL || ''}" target="_blank">${info.manufacturerURL || ''}</a><br>
+        Vendor ID:  ${info.vendorID}<br>
+        Designer(s): ${info.designer} <a href="${info.designerurl || ''}" target="_blank"> ${info.designerurl || ''}</a>  </p>
 
         <p><strong>Copyright</strong><br>
         ${info.copyright}</p>
 
+        <p><strong>License</strong><br>
+        <a href="${info.licenseURL || ''} " target="_blank">${info.licenseURL}</a><br>
+
+        <p><strong>Trademark</strong><br>
+        ${info.trademark}</p>
+
         ${info.axes.length ? `
         <p><strong>Variable font axes</strong><br>
         ${info.axes.map(axis =>
-            `${axis.name} (${axis.tag}) &rarr; ${axis.min} to ${axis.max}, default &rarr; ${axis.default}`
+            `${axis.name} (${axis.tag}) : ${axis.min} to ${axis.max}, default: ${axis.default}`
             ).join('<br>')}</p>` : ''}
     `;
   }
@@ -62,26 +73,19 @@ export class FontInfoRenderer {
 
     const glyphIndex = font.charToGlyphIndex(glyph);
     const glyphObj = font.glyphs.get(glyphIndex);
+	const fullName = unicodeName(glyph)
 
     container.innerHTML = `
     <div class="glyph-info-container">
       <div class="info-column">
-        <p><strong>Glyph information</strong><br>
-        Character &rarr; ${glyph}<br>
-        Name &rarr; <span class="monospaced">${glyphObj.name}</span><br>
-        Unicode &rarr; <span class="monospaced">U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || 'N/A'}</span><br>
-        Index &rarr; <span class="monospaced">${glyphIndex}</span><br>
-        Advance Width &rarr; <span class="monospaced">${glyphObj.advanceWidth}</span></p>
+        <span class="monospaced"> 
+        <p>${glyphObj.name}</p>
+		<p>${fullName}</p>
+		<p>U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || ''}</p>
+		<p>#${glyphIndex} / ${font.glyphs.length} </p> </span>
       </div>
 
       ${glyphObj.xMin !== undefined ? `
-      <div class="info-column">
-        <p><strong>Bounds</strong><br>
-        xMin &rarr; <span class="monospaced">${glyphObj.xMin}</span><br>
-        xMax &rarr; <span class="monospaced">${glyphObj.xMax}</span><br>
-        yMin &rarr; <span class="monospaced">${glyphObj.yMin}</span><br>
-        yMax &rarr; <span class="monospaced">${glyphObj.yMax}</span></p>
-      </div>
       ` : ''}
     </div>
   `;
@@ -111,21 +115,28 @@ export function getFontInformation(font, filename) {
   const info = {
     // Basic info
     filename,
-    fontFamily: names.fontFamily?.en || 'Unknown',
-    fullName: names.fullName?.en || 'Unknown',
-    version: names.version?.en || 'Unknown',
+    fontFamily: names.fontFamily?.en || '',
+    fullName: names.fullName?.en || '',
+    description: names.description?.en || '',
+    version: names.version?.en || '',
+	uniqueID: names.uniqueID?.en || '',
 
     // Author info
-    copyright: names.copyright?.en || 'Unknown',
-    manufacturer: names.manufacturer?.en || 'Unknown',
-    designer: names.designer?.en || 'Unknown',
-    vendorID: os2?.achVendID || 'Unknown',
+    copyright: names.copyright?.en || '',
+    license: names.license?.en || '',
+    licenseURL: names.licenseURL?.en || '',
+    trademark: names.trademark?.en || '',
+    manufacturer: names.manufacturer?.en || '',
+    manufacturerURL: names.manufacturerURL?.en || '',
+    designer: names.designer?.en || '',
+    designerURL: names.designerURL?.en || '',
+    vendorID: os2?.achVendID || '',
 
     // Technical details
     format: font.outlinesFormat,
-    unitsPerEm: head?.unitsPerEm || 'Unknown',
-    created: head?.created ? new Date(head.created * 1000).toLocaleDateString() : 'Unknown',
-    modified: head?.modified ? new Date(head.modified * 1000).toLocaleDateString() : 'Unknown',
+    unitsPerEm: head?.unitsPerEm || '',
+    created: head?.created ? new Date(head.created * 1000).toLocaleDateString() : '',
+    modified: head?.modified ? new Date(head.modified * 1000).toLocaleDateString() : '',
     glyphCount: font.glyphs.length,
 
     // Features
