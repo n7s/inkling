@@ -32,11 +32,11 @@ class FontViewer {
     this.metricsOverlay = new MetricsOverlay(
       document.getElementById('font-metrics-overlay')
     );
-
-    this.variationAxes = new VariationAxes({
-      container: document.getElementById('controls'),
-      onChange: this.handleAxesChange.bind(this)
-    });
+ 
+    //this.variationAxes = new VariationAxes({
+    //  container: document.getElementById('controls'),
+    //  onChange: this.handleAxesChange.bind(this)
+    //});
 
     // Make sure these are after the VariationAxes initialization
     const controls = document.getElementById('controls');
@@ -206,9 +206,9 @@ class FontViewer {
     FontInfoRenderer.renderFontInfo(fontInfoContent, fontInfo);
 
     // Setup variable font axes
-    if (fontInfo.axes?.length > 0) {
-      this.variationAxes.createAxesControls(fontInfo.axes);
-    }
+    //if (fontInfo.axes?.length > 0) {
+    //  this.variationAxes.createAxesControls(fontInfo.axes);
+    //}
 
     // Start glyph animation with the correct font
     try {
