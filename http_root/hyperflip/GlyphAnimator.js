@@ -15,7 +15,7 @@ export class GlyphAnimator {
 
     // Animation timing variables
     this.lastFrameTime = 0;
-    this.interval = 100; // Default interval
+    this.interval = 2000; // Default interval
   }
 
   async setGlyphsFromFont(font) {
