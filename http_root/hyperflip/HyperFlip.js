@@ -86,7 +86,7 @@ class FontViewer {
 
         const isVisible = fontInfo.style.display !== 'none';
         fontInfo.style.display = isVisible ? 'none' : 'block';
-        fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
+        fontInfoToggle.textContent = isVisible ? 'Toggle font info' : 'Toggle font info';
       });
     }
 
@@ -99,7 +99,7 @@ class FontViewer {
 
         const isVisible = glyphInfo.style.display !== 'none';
         glyphInfo.style.display = isVisible ? 'none' : 'block';
-        glyphInfoToggle.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
+        glyphInfoToggle.textContent = isVisible ? 'Toggle glyph info' : 'Toggle glyph info';
       });
     }
 
@@ -199,7 +199,7 @@ class FontViewer {
     // Update display settings
     const display = document.querySelector('.glyph-buffer');
     display.style.fontFamily = `"${fontFamily}"`;
-    display.style.fontSize = '600px';  // Set initial size to match slider
+    display.style.fontSize = '300px';  // Set initial size to match slider
 
     // Update font info panel
     const fontInfoContent = document.getElementById('font-info-content');
@@ -214,7 +214,7 @@ class FontViewer {
     try {
       this.glyphAnimator.setGlyphsFromFont(font)
       .then(() => {
-        this.glyphAnimator.start(100);
+        this.glyphAnimator.start(2000);
       });
     } catch (error) {
       this.handleError(error);
@@ -251,7 +251,7 @@ class FontViewer {
       event.preventDefault();
       this.glyphAnimator.isAnimating ?
       this.glyphAnimator.stop() :
-      this.glyphAnimator.start(parseInt(document.getElementById('animation-delay')?.value || 100));
+      this.glyphAnimator.start(parseInt(document.getElementById('animation-delay')?.value || 2000));
       break;
       case 'f':
       this.uiControls.toggleFullscreen();
