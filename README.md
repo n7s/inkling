@@ -1,82 +1,15 @@
-# The BX90000 Font Presenter Super Suite
-This is a collection of three webpages that enables you to present fonts in three different ways.
-
-## HyperFlip BX90000 Dominator
-Will animate single glyphs from the font you drop on the window.
-
-## WordMaster BX90000 Excelsior
-Will animate words rendered in the font you drop on the window.
-
-## GalleyProof BX90000 Zenith
-Will render a column of text in the font you drop on the window.
+# Inkling
+A simple stand-alone webapp to showcase the beautiful letters of a font. It uses `opentype.js` and does not require an active connection. Any fonts will stay local and not be uploaded to a server. 
 
 ## License
-Like the included `opentype.js` this software is licensed under the MIT license.
+Like the `opentype.js` `unicode-name.js` this software is licensed under the MIT license.
 
-## Requirements
-These pages needs to be served with the `http_server` webserver component from Node, so this must be installed before using these pages. The `serve.sh` script will detect and alert you if this component is not installed.
+## How to use Inkling 
+Just open the HTML page in a browser like Firefox then drag-and-drop a font on it. It will read TTF, OTF and WOFF file formats, both static and variable.
 
-The `serve.sh` and `serve.bat` scripts are configured to find and use the Chrome browser.
+You can adjust the speed of animation, the size and position of the letter.
+By default, the font metadata as well as the glyph information, including the full unicode name for the given character, are displayed for 2 seconds per letter. 
 
-##  How to use the BX90000 Font Presenter Super Suite
-Execute the `serve.sh` (Linux or MacOS) or `serve.bat` (Windows). These scripts will check for the presence of the `http_server`, warn you if it isn’t installed, otherwise proceed with detecting your operating system, finding the Chrome executable, and open the `index.html` in an Incognito window.
-![The BX90000 Font Presenter Super Suite](images/initial_page.png)
+Bringing your mouse towards the lower portion of the screen will reveal the config panel where you can tweak the defaults and learn the shortcuts. 
 
-Click on one of the three options.
-
-## HyperFlip BX90000 Dominator
-Will animate single glyphs from the font you drop on the window.
-![The HyperFlip BX90000 Dominator](images/hyperflip.png)
-
-### Options
-- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
-- Pause/continue the glyph animation by pressing your `space` key
-- Jump ten glyphs forward by pressing the `l` or `▶︎` key
-- Jump one glyph forward by pressing the `k` or `▲` key
-- Jump ten glyphs backwards by pressing the `h` or `◀︎` key
-- Jump one glyph backwards by pressing the `j` or `▼` key
-
-The page has a control panel that will appear when you hover the mouse over the bottom of the page
-- Show font info
-- Show glyph info
-- Show a metrics grid overlay
-- Swap colours
-- Randomise glyph order
-- Adjust the font size
-- Adjust the vertical position
-- Adjust the animation delay
-- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
-
-## WordMaster BX90000 Excelsior
-Will animate words rendered in the font you drop on the window.
-![The WordMaster BX90000 Excelsior](images/wordmaster.png)
-
-### Options
-- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
-- Pause/continue the glyph animation by pressing your `space` key
-
-The page has a control panel that will appear when you hover the mouse over the bottom of the page
-- Show font info
-- Swap colours
-- Toggle Stylistic Alternates and small-caps
-- Adjust the font size
-- Adjust the animation delay
-- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
-
-## GalleyProof BX90000 Zenith
-Will render a column of text in the font you drop on the window.
-![The GalleyProof BX90000 Zenith](images/galleyproof.png)
-
-### Options
-- Fullscreen mode (press the `Fullscreen` button or press your `f` key)
-
-The page has a control panel that will appear when you hover the mouse over the bottom of the page
-- Show font info
-- Swap colours
-- Toggle Stylistic Alternates and small-caps
-- Adjust the font size
-- Adjust the leading
-- Adjust the column width
-- Adjust the letter spacing
-- Adjust the word spacing
-- Adjust the Variable Font axes settings (these will only appear if the font contains variable font axes)
+Made by Nicolas Spalinger, based on <a href="https://github.com/clauseggers/BX90000FontPresenterSuperSuite">HyperFlipBX90000Dominator, from the BX90000FontPresenterSuperSuite</a> by <a href="https://www.forthehearts.net/about/">Claus Egger Sørensen</a>.  
