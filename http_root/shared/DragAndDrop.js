@@ -42,7 +42,7 @@ export class DragAndDrop {
   handleDrop(e) {
     const file = e.dataTransfer.files[0];
     if (!this.validateFontFile(file)) {
-      alert('Please drop a valid font file (.ttf or .otf)');
+      alert('Please drop a valid font file (.ttf .otf .woff)');
       return;
     }
 
@@ -56,7 +56,7 @@ export class DragAndDrop {
   }
 
   validateFontFile(file) {
-    return file && file.name.match(/\.(ttf|otf)$/i);
+    return file && file.name.match(/\.(ttf|otf|woff)$/i);
   }
 
   async readFile(file) {
