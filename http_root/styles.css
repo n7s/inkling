@@ -31,7 +31,7 @@ p > semibold {
 
 .monospaced {
   font-family: var(--system-mono);
-  font-size: 25px;
+  font-size: 20px;
   text-align: right; 
 }
 
@@ -181,7 +181,7 @@ p > semibold {
 #glyph-info {
   position: absolute;
   top: 400px;
-  right: 50px;
+  right: 20px;
   color: var(--black);
 }
 
@@ -192,7 +192,7 @@ p > semibold {
 .glyph-info-container {
   display: inline;
   align-items: baseline;
-  font-size: 20px;
+  font-size: 15px;
 }
 
 .info-column {
@@ -202,8 +202,8 @@ p > semibold {
 }
 
 .info-column > p {
-  width: 700px;
-  padding: 15px;
+  width: 900px;
+  padding: 10px;
 }
 
 #controls {
