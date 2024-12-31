@@ -89,7 +89,7 @@ export class FontInfoRenderer {
 		<p>${fullUniName}</p>
 		<i>
 		<p>Script: ${uniScript}</p>
-		<p>Bloc: ${uniBlock}</p>
+		<p>Block: ${uniBlock}</p>
 		<p>Hex: U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || ''}</p>
 		<p>#${glyphIndex} / ${font.glyphs.length} </i> </p> </span>
       </div>
