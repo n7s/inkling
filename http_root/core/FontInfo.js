@@ -4,6 +4,8 @@
 
 import { AXIS_NAMES } from './Types.js';
 import { unicodeName } from "../shared/unicode-name.js";
+import {  unicodeScript } from "../shared/unicode-script.js";
+import {  unicodeBlock } from "../shared/unicode-block.js";
 
 export class FontInfoRenderer {
   /**
@@ -73,16 +75,23 @@ export class FontInfoRenderer {
 
     const glyphIndex = font.charToGlyphIndex(glyph);
     const glyphObj = font.glyphs.get(glyphIndex);
-	const fullName = unicodeName(glyph)
+	const fullUniName = unicodeName(glyph);
+	const uniScript = unicodeScript(glyph);
+	const uniBlock = unicodeBlock(glyph);
+
+	// const category  = unicode.getCategory(glyph.charCodeAt())
 
     container.innerHTML = `
     <div class="glyph-info-container">
       <div class="info-column">
         <span class="monospaced"> 
         <p>${glyphObj.name}</p>
-		<p>${fullName}</p>
-		<p>U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || ''}</p>
-		<p>#${glyphIndex} / ${font.glyphs.length} </p> </span>
+		<p>${fullUniName}</p>
+		<i>
+		<p>Script: ${uniScript}</p>
+		<p>Bloc: ${uniBlock}</p>
+		<p>Hex: U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || ''}</p>
+		<p>#${glyphIndex} / ${font.glyphs.length} </i> </p> </span>
       </div>
 
       ${glyphObj.xMin !== undefined ? `

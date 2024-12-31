@@ -14,4 +14,4 @@ Made by Nicolas Spalinger, based on <a href="https://github.com/clauseggers/BX90
 ## Copyright and License
 Copyright (c) 2024 Claus Eggers Sørensen   
 Copyright (c) 2024, Nicolas Spalinger   
-This software is licensed under the [MIT license](LICENSE), like `opentype.js` `unicode-name.js`
+This software is licensed under the [MIT license](LICENSE), like `opentype.js` `unicode-name.js`, `unicode-script.js` and `unicode-block.js`.
