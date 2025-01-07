@@ -91,6 +91,7 @@ export class FontInfoRenderer {
 		<p>Script: ${uniScript}</p>
 		<p>Block: ${uniBlock}</p>
 		<p>Hex: U+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0') || ''}</p>
+		<p>ScriptSource: <a href="https://scriptsource.org/char/U${glyphObj.unicode?.toString(16).toUpperCase().padStart(6, '0')}" target="_blank">U${glyphObj.unicode?.toString(16).toUpperCase().padStart(6, '0')}</a></p>
 		<p>#${glyphIndex} / ${font.glyphs.length} </i> </p> </span>
       </div>
 
