@@ -35,6 +35,12 @@ p > semibold {
   text-align: right; 
 }
 
+.unicode {
+  font-family: var(--system-mono);
+  font-size: 15px;
+  text-align: right; 
+  font-style: italic;
+}
 #index_link > a {
   font-weight: 600;
   color: var(--black);
@@ -180,7 +186,7 @@ p > semibold {
 
 #glyph-info {
   position: absolute;
-  top: 400px;
+  top: 200px;
   right: 20px;
   color: var(--black);
 }
