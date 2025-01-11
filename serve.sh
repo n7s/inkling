@@ -16,8 +16,10 @@ while ! nc -z localhost 8080; do
 done
 
 # Find out local IP of server
-IP=$(ip -f inet addr show wlp59s0 | grep -Po 'inet \K[\d.]+')
-echo "Point your browser to $IP:8080"
+ETHIP=$(ip -f inet addr show wlp59s0 | grep -Po 'inet \K[\d.]+')
+WIFIIP=$(ip -f inet addr show enx98e743c408b2 | grep -Po 'inet \K[\d.]+')
+echo "Point your browser to http://$ETHIP:8080  (ethernet)"
+echo "Point your browser to http://$WIFIIP:8080 (wifi)"
 
 wait
 #EOF
