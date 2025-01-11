@@ -96,10 +96,9 @@ export class FontInfoRenderer {
 		<p>Unicode character properties: <a href="https://util.unicode.org/UnicodeJsps/character.jsp?a=${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}&B1=Show" target="_blank">${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}</a></p>
 		<p>Unicode reference glyph: <a href="https://www.unicode.org/cgi-bin/refglyph?24-${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}" target="_blank">${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}</a></p>
 		<p>DecodeUnicode: <a href="https://decodeunicode.org/en/u+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}" target="_blank">u+${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}</a></p>
-		<p>Search Unicode chart: 
-		<form method="post" action="https://www.unicode.org/cgi-bin/Code2Chart" enctype="application/x-www-form-urlencoded">
-		 <input name="HexCode" size="8" maxlength="4" type="text" value="${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}" >&nbsp;
-         <input name="submit" value="Go" type="submit"> </p>
+		<form method="post" action="https://www.unicode.org/cgi-bin/Code2Chart" enctype="application/x-www-form-urlencoded" target="_blank">
+		 <input name="HexCode" size="8" maxlength="8" type="text" value="${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}">
+         <input name="submit" value="Get Unicode Chart containing ${glyphObj.unicode?.toString(16).toUpperCase().padStart(4, '0')}" type="submit">
 
 		<p>#${glyphIndex} / ${font.glyphs.length} </i> </p> </span>
       </div>

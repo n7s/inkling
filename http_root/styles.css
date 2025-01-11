@@ -341,6 +341,37 @@ input[type="range"]:focus::-moz-range-thumb {
   font-size: 14px;
   text-decoration: none;
   text-align: center;
-
 }
+
+input[type=text] { 
+  display: none;
+}
+
+input[type=submit] { 
+  font-size: 15px;
+  font-style: italic;
+  text-align: right;
+  padding-right: 10;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  background: white;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+input[type=submit]:hover { 
+  font-size: 15px;
+  font-style: italic;
+  padding-right: 10;
+  text-align: right;
+  text-decoration: none;
+  cursor: pointer;
+  background: lightgrey;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+
+
 
