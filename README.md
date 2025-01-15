@@ -1,6 +1,6 @@
 # Inkling
 
-A simple stand-alone webapp to showcase all the beautiful letters of a font (specifically the glyphs of any letter, mark, punctuation, symbol or number). Just a hint of the various letterforms that typeface designers and script engineers have built together (see the [definition of inkling](https://en.wiktionary.org/wiki/inkling)). It uses `opentype.js` along with `unicode-name|script|block.js` and does not require an active connection. Any fonts will stay local and not be uploaded to a server.
+A simple stand-alone webapp to showcase all the beautiful letters of a font (specifically the glyphs of any letter, mark, punctuation, symbol or number). Just a hint of the various letterforms that typeface designers and script engineers have built together (see the [definition of inkling](https://en.wiktionary.org/wiki/inkling)). It uses `opentype.js` along with `unicode-name|script|block.js` and does not require an active connection. Any fonts will stay local and not be uploaded to a server. You might like to try some [fonts featured on this showcase](https://openfontlicense.org/ofl-fonts).
 
 ## How to use Inkling
 
