@@ -86,7 +86,7 @@ class FontViewer {
 
         const isVisible = fontInfo.style.display !== 'none';
         fontInfo.style.display = isVisible ? 'none' : 'block';
-        fontInfoToggle.textContent = isVisible ? 'Toggle font info' : 'Toggle font info';
+        fontInfoToggle.textContent = isVisible ? 'Show font info' : 'Hide font info';
       });
     }
 
@@ -99,7 +99,7 @@ class FontViewer {
 
         const isVisible = glyphInfo.style.display !== 'none';
         glyphInfo.style.display = isVisible ? 'none' : 'block';
-        glyphInfoToggle.textContent = isVisible ? 'Toggle glyph info' : 'Toggle glyph info';
+        glyphInfoToggle.textContent = isVisible ? 'Show glyph info' : 'Hide glyph info';
       });
     }
 
